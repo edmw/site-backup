@@ -3,8 +3,8 @@
 Mixin and Decorators to collect and report
 success and failure of function calls. 
 
-To use add the mixin to the class to be observed:
-and decorate the function to be observed:
+To use add the mixin to a class
+and decorate the functions to be observed:
 
 class IDoSomething(Reporter, object):
 
