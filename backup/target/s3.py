@@ -54,7 +54,7 @@ class S3(Reporter, object):
 
   @ReporterCheckResult
   def transferArchive(self, archive):
-    Result = collections.namedtuple('Result', ['sizeOfKey'])
+    Result = collections.namedtuple('Result', ['size'])
 
     try:
       if self.connection.lookup(self.bucket):
