@@ -10,9 +10,9 @@
 
 import sys, os, os.path
 
-from backup import ReporterMixin
-from backup.utils import formatkv
 from backup.archive import Archive
+from backup.utils import formatkv
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 
 class FSError(Exception):
   def __init__(self, fs, message):
@@ -24,7 +24,7 @@ class FSError(Exception):
 class FSNotFoundError(FSError):
   pass
 
-class FS(ReporterMixin, object):
+class FS(Reporter, object):
   def __init__(self, path):
     super(FS, self).__init__()
 
@@ -44,7 +44,6 @@ class FS(ReporterMixin, object):
       title="FILESYSTEM"
     )
 
+  @ReporterCheck
   def addToArchive(self, archive):
-    self.checkException(self._addToArchive, archive)
-  def _addToArchive(self, archive):
     archive.addPath(self.path, name=archive.name)

@@ -9,12 +9,12 @@ from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
 from backup.source.wordpress import WP, WPError
 from backup.target.s3 import S3, S3Error
-from backup.utils import timestamp
+from backup.utils import LF, LFLF, timestamp
 
 def sendReport(mailto, mailfrom, reporters):
   from email.mime.text import MIMEText
 
-  mail = MIMEText("\n\n".join([reporter.report() for reporter in reporters]))
+  mail = MIMEText(LFLF.join([LF.join([str(reporter), reporter.reportResults()]) for reporter in reporters]))
 
   mail['Subject'] = "[WPBACKUP] Archive %s of Wordpress Blog '%s'" % (archive.name, wordpress.title)
   mail['From'] = mailfrom

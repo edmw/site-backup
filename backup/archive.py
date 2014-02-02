@@ -10,7 +10,7 @@
 
 import sys, os, os.path
 
-from backup import ReporterMixin
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import formatkv
 
 import time
@@ -45,7 +45,7 @@ class ArchiveFile(object):
     self.handle.seek(0)
     return self.handle
 
-class Archive(ReporterMixin, object):
+class Archive(Reporter, object):
   def __init__(self, name):
     super(Archive, self).__init__()
 
@@ -71,8 +71,8 @@ class Archive(ReporterMixin, object):
   def __exit__(self, type, value, traceback):
     self.tar.close()
 
-    Result = collections.namedtuple("Result", ["sizeOfTarfile"])
-    self.setResult("createArchive", Result(os.path.getsize(self.tarname())))
+    Result = collections.namedtuple("Result", ["size"])
+    self.storeResult("createArchive", Result(os.path.getsize(self.tarname())))
 
   def rename(self, path):
     tarname = self.tarname()
@@ -88,24 +88,21 @@ class Archive(ReporterMixin, object):
   def createArchiveFile(self, name):
     return ArchiveFile(name)
     
+  @ReporterCheckResult
   def addArchiveFile(self, archivefile):
-    self.checkResultAndException(self._addArchiveFile, archivefile)
-  def _addArchiveFile(self, archivefile):
     tarinfo = tarfile.TarInfo(archivefile.name)
     tarinfo.mtime = archivefile.mtime
     tarinfo.size = archivefile.size()
     self.tar.addfile(tarinfo, archivefile.fileobject())
-    return True
+    return archivefile.name
 
+  @ReporterCheckResult
+  def addPath(self, path, name=None):
+    self.tar.add(path, arcname=name)
+    return path
+
+  @ReporterCheck
   def addManifest(self, timestamp):
-    self.checkResultAndException(self._addManifest, timestamp)
-  def _addManifest(self, timestamp):
     f = self.createArchiveFile("MANIFEST")
     f.writeline("Timestamp: %s" % timestamp)
-    return self._addArchiveFile(f)
-
-  def addPath(self, path, name=None):
-    self.checkResultAndException(self._addPath, path, name)
-  def _addPath(self, path, name=None):
-    self.tar.add(path, arcname=name)
-    return True
+    self.addArchiveFile(f)
