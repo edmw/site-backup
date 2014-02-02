@@ -13,9 +13,9 @@ import sys, os, os.path
 import collections
 import subprocess
 
-from backup import ReporterMixin
-from backup.utils import formatkv
 from backup.archive import Archive
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
+from backup.utils import formatkv
 
 class DBError(Exception):
   def __init__(self, db, message):
@@ -27,7 +27,7 @@ class DBError(Exception):
 class DBAccessDeniedError(DBError):
   pass
 
-class DB(ReporterMixin, object):
+class DB(Reporter, object):
   def __init__(self, db, host, user, password, prefix):
     super(DB, self).__init__()
 
@@ -72,9 +72,8 @@ class DB(ReporterMixin, object):
 
     return [line for line in stdoutdata.split('\n') if len(line.strip()) > 0]
 
+  @ReporterCheckResult
   def dumpToArchive(self, archive):
-    self.checkResultAndException(self._dumpToArchive, archive)
-  def _dumpToArchive(self, archive):
     Result = collections.namedtuple('Result', ['lengthOfDump', 'numberOfTables'])
 
     tables = self.tables()

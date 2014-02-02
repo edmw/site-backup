@@ -11,7 +11,7 @@
 import sys, os, os.path
 import re
 
-from backup import ReporterMixin
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import slugify, formatkv
 
 import MySQLdb
@@ -29,7 +29,7 @@ class WPNotFoundError(WPError):
 class WPDatabaseError(WPError):
   pass
 
-class WP(ReporterMixin, object):
+class WP(Reporter, object):
   def __init__(self, path):
     super(WP, self).__init__()
 
@@ -50,8 +50,8 @@ class WP(ReporterMixin, object):
     if not os.path.exists(self.fspath) or not os.path.isfile(self.fsconfig):
       raise WPNotFoundError(self, "no wordpress instance found at '%s'" % self.fspath)
 
-    self.checkException(self.parseConfiguration)
-    self.checkException(self.queryDatabase)
+    self.parseConfiguration()
+    self.queryDatabase()
 
     self.slug = slugify(self.title)
 
@@ -70,6 +70,7 @@ class WP(ReporterMixin, object):
       title = "WORDPRESS",
     )
 
+  @ReporterCheck
   def parseConfiguration(self):
     # regular expression for php defines: define('KEY', 'VALUE');
     re_define = re.compile(r"^\s*define\([\'\"]([^\'\"]+)[\'\"]\s*,\s*[\'\"]([^\'\"]+)[\'\"]\s*\)\s*;")
@@ -93,6 +94,7 @@ class WP(ReporterMixin, object):
           self.dbprefix = m.group(1)
           continue
 
+  @ReporterCheck
   def queryDatabase(self):
     connection = None
     try:

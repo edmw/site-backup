@@ -10,7 +10,7 @@
 
 import sys, os, os.path
 
-from backup import ReporterMixin
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import formatkv
 
 import time
@@ -27,7 +27,7 @@ class S3Error(Exception):
   def __str__(self):
     return "S3Error(%s)" % repr(self.message)
 
-class S3(ReporterMixin, object):
+class S3(Reporter, object):
   def __init__(self, host, accesskey, secretkey, bucket):
     super(S3, self).__init__()
 
@@ -52,9 +52,8 @@ class S3(ReporterMixin, object):
       title="S3"
     )
 
+  @ReporterCheckResult
   def transferArchive(self, archive):
-    self.checkResultAndException(self._transferArchive, archive)
-  def _transferArchive(self, archive):
     Result = collections.namedtuple('Result', ['sizeOfKey'])
 
     try:

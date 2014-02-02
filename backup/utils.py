@@ -5,6 +5,9 @@ import re
 
 import time
 
+LF = '\n'
+LFLF = '\n\n'
+
 def timestamp():
   from datetime import datetime
   return datetime.now().strftime('%Y%m%d%H%M%S')
@@ -19,7 +22,7 @@ def slugify(value):
 def formatkv(kv, title=None):
   out = list()
   if title:
-  	out.append("*** %s" % title)
+  	out.append("%s" % title)
   for (k, v) in kv:
     out.append("    %s: %s" % (k, v))
   return "\n".join(out)
