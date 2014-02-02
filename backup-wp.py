@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 
-import os, os.path
+import sys, os, os.path
 import subprocess
 
 from backup.archive import Archive
