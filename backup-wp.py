@@ -2,26 +2,10 @@
 # coding: utf-8
 
 import sys, os, os.path
-import subprocess
 
-from backup.archive import Archive
-from backup.database import DB, DBError
-from backup.filesystem import FS, FSError
+from backup import Backup
 from backup.source.wordpress import WP, WPError
 from backup.target.s3 import S3, S3Error
-from backup.utils import LF, LFLF, timestamp
-
-def sendReport(mailto, mailfrom, reporters):
-  from email.mime.text import MIMEText
-
-  mail = MIMEText(LFLF.join([LF.join([str(reporter), reporter.reportResults()]) for reporter in reporters]))
-
-  mail['Subject'] = "[WPBACKUP] Archive %s of Wordpress Blog '%s'" % (archive.name, wordpress.title)
-  mail['From'] = mailfrom
-  mail['To'] = mailto
-
-  p = subprocess.Popen(["/usr/sbin/sendmail", "-oi", "-t"], stdin=subprocess.PIPE)
-  p.communicate(mail.as_string())
 
 ##     ##    ###    #### ##    ## 
 ###   ###   ## ##    ##  ###   ## 
@@ -80,80 +64,50 @@ if __name__ == "__main__":
 
   arguments = parser.parse_args()
 
-  def message(text):
-    if not arguments.quiet: print text
-    
+  # initialize source
+
   try:
-    wordpress = WP(arguments.path)
-  except WPError, x:
-    print x
+    source = WP(arguments.path)
+  except WPError as e:
+    print e
     sys.exit(1)
 
   if not arguments.db is None:
-    wordpress.db = arguments.db
+    source.db = arguments.db
   if not arguments.dbhost is None:
-    wordpress.dbhost = arguments.dbhost
+    source.dbhost = arguments.dbhost
   if not arguments.dbuser is None:
-    wordpress.dbuser = arguments.dbuser
+    source.dbuser = arguments.dbuser
   if not arguments.dbpass is None:
-    wordpress.dbpass = arguments.dbpass
+    source.dbpass = arguments.dbpass
   if not arguments.dbprefix is None:
-    wordpress.dbprefix = arguments.dbprefix
+    source.dbprefix = arguments.dbprefix
 
-  timestamp = timestamp()
-  try:
-    reporters = [wordpress]
+  # initialize targets
 
-    archive = Archive("%s-%s" % (wordpress.slug, timestamp))
-    with archive:
-      message("Creating archive for Wordpress Blog '%s'" % wordpress.title)
+  targets = []
 
-      if arguments.database is True:
-        message("Processing database of Wordpress Blog '%s'" % wordpress.title)
-        db = DB(wordpress.dbname, wordpress.dbhost, wordpress.dbuser, wordpress.dbpass, wordpress.dbprefix)
-        db.dumpToArchive(archive)
-        reporters.append(db)
+  if arguments.s3:
+    # transfer archive to s3 service
+    s3 = S3(
+      arguments.s3,
+      arguments.s3accesskey,
+      arguments.s3secretkey,
+      arguments.s3bucket if arguments.s3bucket else source.slug,
+    )
+    targets.append(s3)
 
-      if arguments.filesystem is True:
-        message("Processing filesystem of Wordpress Blog '%s'" % wordpress.title)
-        fs = FS(wordpress.fspath)
-        fs.addToArchive(archive)
-        reporters.append(fs)
+  # initialize options
 
-      archive.addManifest(timestamp)
+  mailto = source.email if arguments.mail_to_admin else None
+  mailfrom = arguments.mail_from
 
-    reporters.append(archive)
+  # initialize and execute backup
 
-    if arguments.s3:
-      # transfer archive to s3 service
-      message("Transfering archive to S3 Service at %s" % arguments.s3)
-      s3 = S3(
-        arguments.s3,
-        arguments.s3accesskey,
-        arguments.s3secretkey,
-        arguments.s3bucket if arguments.s3bucket else wordpress.slug,
-      )
-      s3.transferArchive(archive)
-      reporters.append(s3)
-
-    if arguments.attic:
-      archive.rename(arguments.attic)
-    else:
-      archive.remove()
-
-    if arguments.mail_to_admin:
-      message("Send report to administrator %s of Wordpress Blog '%s'" % (wordpress.email, wordpress.title))
-      sendReport(wordpress.email, arguments.mail_from, reporters)
-
-  except DBError, x:
-    print x.db
-    print x
-    sys.exit(1)
-  except FSError, x:
-    print x.fs
-    print x
-    sys.exit(1)
-  except S3Error, x:
-    print x.s3
-    print x
-    sys.exit(1)
+  backup = Backup(source, mailto, mailfrom, arguments.quiet)
+  backup.execute(
+    targets=targets,
+    database=arguments.database,
+    filesystem=arguments.filesystem,
+    attic=arguments.attic
+  )

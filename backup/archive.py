@@ -74,17 +74,6 @@ class Archive(Reporter, object):
     Result = collections.namedtuple("Result", ["size"])
     self.storeResult("createArchive", Result(os.path.getsize(self.tarname())))
 
-  def rename(self, path):
-    tarname = self.tarname()
-    if not path == self.path:
-      self.path = path
-      os.rename(tarname, self.tarname())
-
-  def remove(self):
-    tarname = self.tarname()
-    if os.path.isfile(tarname):
-      os.remove(tarname)
-
   def createArchiveFile(self, name):
     return ArchiveFile(name)
     
@@ -106,3 +95,17 @@ class Archive(Reporter, object):
     f = self.createArchiveFile("MANIFEST")
     f.writeline("Timestamp: %s" % timestamp)
     self.addArchiveFile(f)
+
+  @ReporterCheck
+  def rename(self, path):
+    tarname = self.tarname()
+    if not path == self.path:
+      self.path = path
+      os.rename(tarname, self.tarname())
+
+  @ReporterCheck
+  def remove(self):
+    tarname = self.tarname()
+    if os.path.isfile(tarname):
+      os.remove(tarname)
+      
