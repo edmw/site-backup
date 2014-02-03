@@ -7,6 +7,7 @@ import time
 
 LF = '\n'
 LFLF = '\n\n'
+SPACE = ' '
 
 def timestamp():
   from datetime import datetime
