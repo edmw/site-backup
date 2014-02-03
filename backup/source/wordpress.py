@@ -42,9 +42,10 @@ class WP(Reporter, object):
     self.dbuser = None
     self.dbpass = None
 
-    self.slug = None
     self.title = None
     self.email = None
+    self.description = None
+    self.slug = None
 
     # check preconditions
     if not os.path.exists(self.fspath) or not os.path.isfile(self.fsconfig):
@@ -53,6 +54,7 @@ class WP(Reporter, object):
     self.parseConfiguration()
     self.queryDatabase()
 
+    self.description = "Wordpress Blog '%s'" % self.title
     self.slug = slugify(self.title)
 
   def __str__(self):
