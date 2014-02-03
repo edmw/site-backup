@@ -65,6 +65,7 @@ def ReporterCheck(function):
       self.storeResult(function.func_name, True)
     except:
       self.storeResult(function.func_name, False)
+      raise
   return checkedFunction
 
 def ReporterCheckResult(function):
@@ -78,4 +79,5 @@ def ReporterCheckResult(function):
       self.storeResult(function.func_name, result)
     except:
       self.storeResult(function.func_name, False)
+      raise
   return checkedFunction
