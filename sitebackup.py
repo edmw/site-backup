@@ -120,7 +120,7 @@ def main(args=None):
         sys.exit(1)
 
     if not arguments.db is None:
-        source.db = arguments.db
+        source.dbname = arguments.db
     if not arguments.dbhost is None:
         source.dbhost = arguments.dbhost
     if not arguments.dbuser is None:
