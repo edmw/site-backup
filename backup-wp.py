@@ -37,7 +37,7 @@ def dir_argument(string):
     raise argparse.ArgumentTypeError("%r is not an existing directory" % string)
   return string
 
-if __name__ == "__main__":
+def main(args=None):
   import argparse
 
   parser = argparse.ArgumentParser(description=description, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
   group_report.add_argument('--mail-from', action='store', help='sender address for report mails', metavar='MAIL')
   group_report.add_argument('--mail-to-admin', action='store_true', help='send report to wordpress administrator')
 
-  arguments = parser.parse_args()
+  arguments = parser.parse_args() if args == None else parser.parse_args(args)
 
   # initialize source
 
@@ -111,3 +111,6 @@ if __name__ == "__main__":
     filesystem=arguments.filesystem,
     attic=arguments.attic
   )
+
+if __name__ == "__main__":
+  main()
