@@ -66,10 +66,9 @@ def main(args=None):
         help='backup wordpress database')
     parser.add_argument('--filesystem', action='store_true',
         help='backup wordpress filesystem')
+
     group_db = parser.add_argument_group(
-        'database backup options',
-        ''
-    )
+        'database backup options', '')
     group_db.add_argument('--db', action='store', metavar='NAME',
         help='name for wordpress db')
     group_db.add_argument('--dbhost', action='store', metavar='HOST',
@@ -80,18 +79,18 @@ def main(args=None):
         help='password for wordpress db')
     group_db.add_argument('--dbprefix', action='store', metavar='PREFIX',
         help='prefix for table names in wordpress db')
+
     group_local = parser.add_argument_group(
         'local target',
-        'options for storing the backup archive on local filesystem'
-    )
+        'options for storing the backup archive on local filesystem')
     group_local.add_argument('--attic', action='store', metavar='DIR',
         nargs='?', const='.', default=None,
         type=dir_argument,
         help='local directory to store backup archive')
+
     group_s3 = parser.add_argument_group(
         's3 target',
-        'options for copying the backup archive to a s3 service'
-    )
+        'options for copying the backup archive to a s3 service')
     group_s3.add_argument('--s3', action='store', metavar='HOST',
         help='host for s3 server')
     group_s3.add_argument('--s3accesskey', action='store', metavar='KEY',
@@ -100,10 +99,9 @@ def main(args=None):
         help='secret key for s3 server')
     group_s3.add_argument('--s3bucket', action='store', metavar='BUCKET',
         help='bucket at s3 server')
+
     group_report = parser.add_argument_group(
-        'report options',
-        ''
-    )
+        'report options', '')
     group_report.add_argument('--mail-from', action='store', metavar='MAIL',
         help='sender address for report mails')
     group_report.add_argument('--mail-to-admin', action='store_true',
@@ -151,7 +149,7 @@ def main(args=None):
 
     # initialize and execute backup
 
-    backup = Backup(source, mailto, mailfrom, arguments.quiet)
+    backup = Backup(source, mailto, mailfrom, quiet=arguments.quiet)
     backup.execute(
         targets=targets,
         database=arguments.database,

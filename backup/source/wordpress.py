@@ -44,6 +44,7 @@ class WP(Reporter, object):
 
     self.title = None
     self.email = None
+    
     self.description = None
     self.slug = None
 
