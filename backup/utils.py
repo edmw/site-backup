@@ -14,10 +14,11 @@ def timestamp():
   return datetime.now().strftime('%Y%m%d%H%M%S')
 
 def slugify(value):
-  import unicodedata
-  value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
-  value = re.sub('[^\w\s-]', '', value).strip().lower()
-  value = re.sub('[-\s]+', '-', value)
+  if not value is None:
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+    value = re.sub('[^\w\s-]', '', value).strip().lower()
+    value = re.sub('[-\s]+', '-', value)
   return value
 
 def formatkv(kv, title=None):
