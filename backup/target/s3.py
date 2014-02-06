@@ -1,5 +1,9 @@
 # coding: utf-8
 
+"""
+Transfer a backup archive to a cloud service using the S3 API.
+"""
+
 ########    ###    ########   ######   ######## ########             ######   #######
    ##      ## ##   ##     ## ##    ##  ##          ##     ##        ##    ## ##     ##
    ##     ##   ##  ##     ## ##        ##          ##     ##        ##              ##
@@ -22,6 +26,7 @@ import socket
 
 
 class S3Error(Exception):
+    """ Base Exception for errors while using a cloud service. """
 
     def __init__(self, s3, message):
         super(S3Error, self).__init__()
@@ -33,6 +38,16 @@ class S3Error(Exception):
 
 
 class S3(Reporter, object):
+    """ Class using a cloud service with the S3 API to transfer an archive.
+
+    To use initialize with the configuration of a compatible cloud service
+    and call transferArchive with an archive object.
+
+    If stdout is bound to a console a progress indicator will be displayed.
+
+    Uses the reporter mixin and decorators to generate a results report.
+
+    """
 
     def __init__(self, host, accesskey, secretkey, bucket):
         super(S3, self).__init__()
@@ -65,6 +80,13 @@ class S3(Reporter, object):
 
     @ReporterCheckResult
     def transferArchive(self, archive):
+        """ Transfers the given archive to the configured cloud service.
+
+        If the configured bucket does not exist it will be created.
+
+        Returns the size of the transferred file on success.
+
+        """
         Result = collections.namedtuple('Result', ['size'])
 
         try:
@@ -87,6 +109,12 @@ class S3(Reporter, object):
             raise S3Error(self, repr(e))
 
     def progress(self, complete, total):
+        """ Prints a progress indicator.
+
+        If stdout is bound to a console the progress indicator will be
+        displayed.
+
+        """
         if sys.stdin.isatty():
             if complete == 0:
                 self.progress_stime = time.time()
