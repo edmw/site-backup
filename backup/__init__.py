@@ -1,5 +1,9 @@
 # coding: utf-8
 
+"""
+Create a backup archive from a database and a filesystem.
+"""
+
 __version__ = "1.0.0"
 
 import sys, os, os.path
@@ -12,90 +16,144 @@ from backup.target.s3 import S3, S3Error
 from backup.utils import LF, LFLF, SPACE, timestamp
 
 class Backup(object):
-  def __init__(self, source, mailto, mailfrom, quiet=False):
-    self.source = source
-    self.mailto = mailto
-    self.mailfrom = mailfrom
-    self.quiet = quiet
+    """ Class to create an archive from a database and a filesystem.
 
-  def message(self, text):
-    if not self.quiet: print text
+    To use initialize with a source and call execute with the desired
+    targets. See backup.source for available sources and backup.target for
+    available targets.
 
-  def backupDatabase(self, archive):
-    self.message("Processing database of %s" % self.source.description)
-    db = DB(
-          self.source.dbname,
-          self.source.dbhost,
-          self.source.dbuser,
-          self.source.dbpass,
-          self.source.dbprefix
+    """
+
+    def __init__(self, source, mailto, mailfrom, quiet=False):
+        self.source = source
+        self.mailto = mailto
+        self.mailfrom = mailfrom
+        self.quiet = quiet
+
+    def message(self, text):
+        """ Prints a message if not told to be quiet. """
+        if not self.quiet:
+            print text
+
+    def backupDatabase(self, archive):
+        """ Creates a database backup and stores it into the archive.
+        """
+        self.message("Processing database of %s" \
+            % self.source.description
         )
-    db.dumpToArchive(archive)
-    return db
 
-  def backupFilesystem(self, archive):
-    self.message("Processing filesystem of %s" % self.source.description)
-    fs = FS(
-          self.source.fspath
+        db = DB(
+            self.source.dbname,
+            self.source.dbhost,
+            self.source.dbuser,
+            self.source.dbpass,
+            self.source.dbprefix
         )
-    fs.addToArchive(archive)
-    return fs
+        db.dumpToArchive(archive)
+        return db
 
-  def sendReport(self, reporters):
-    from email.mime.text import MIMEText
+    def backupFilesystem(self, archive):
+        """ Creates filesystem backup and stores it into the archive.
+        """
+        self.message("Processing filesystem of %s" \
+            % self.source.description
+        )
 
-    mail = MIMEText(LFLF.join([LF.join([str(reporter), reporter.reportResults()]) for reporter in reporters]))
+        fs = FS(
+            self.source.fspath
+        )
+        fs.addToArchive(archive)
+        return fs
 
-    mail['Subject'] = "[BACKUP] Archive for %s" % self.source.description
-    mail['To'] = self.mailto
-    mail['From'] = self.mailfrom
+    def sendReport(self, reporters):
+        """ Sends a report with the results of the archive creation.
+        """
+        from email.mime.text import MIMEText
 
-    p = subprocess.Popen(["/usr/sbin/sendmail", "-oi", "-t"], stdin=subprocess.PIPE)
-    p.communicate(mail.as_string())
+        reports = []
+        for reporter in reporters:
+            setup = str(reporter)
+            results = reporter.reportResults()
+            reports.append(LF.join([setup, results]))
+        text = LFLF.join(reports)
 
-  def execute(self, targets=None, database=False, filesystem=False, attic=None):
-    ts = timestamp()
+        subject = "[BACKUP] Archive for %s" % self.source.description
 
-    try:
-      reporters = [self.source]
+        mail = MIMEText(text)
+        mail['Subject'] = subject
+        mail['To'] = self.mailto
+        mail['From'] = self.mailfrom
 
-      # create archive
+        process = subprocess.Popen(
+            ["/usr/sbin/sendmail", "-oi", "-t"],
+            stdin=subprocess.PIPE,
+        )
+        process.communicate(mail.as_string())
 
-      archive = Archive("%s-%s" % (self.source.slug, ts))
-      with archive:
-        self.message("Creating archive for %s" % self.source.description)
+    def execute(self,
+            targets=None, database=False, filesystem=False, attic=None):
 
-        if database is True:
-          reporter = self.backupDatabase(archive)
-          reporters.append(reporter)
+        """ Perfoms the creation of an archive.
 
-        if filesystem is True:
-          reporter = self.backupFilesystem(archive)
-          reporters.append(reporter)
+            The flags database and filesystem specify which data should be
+            included in the archive. Setting both flags to False will result
+            in an empty archive.
 
-        archive.addManifest(timestamp)
+            The archive will be transferred to each of the given targets.
 
-      reporters.append(archive)
+            If attic is given the archive file will be renamed to its value.
+            Otherwise the archive file will be deleted (after it was
+            transferred to the given targets).
 
-      # transfer archive to targets
+        """
+        ts = timestamp()
 
-      for target in targets:
-        self.message("Transfering archive to %s" % target.description)
-        target.transferArchive(archive)
-        reporters.append(target)
+        try:
+            reporters = [self.source]
 
-      # remove archive
+            # create archive
 
-      if attic:
-        archive.rename(attic)
-      else:
-        archive.remove()
+            archive = Archive("%s-%s" % (self.source.slug, ts))
+            with archive:
+                self.message("Creating archive for %s" \
+                    % self.source.description
+                )
 
-      # send report
+                if database is True:
+                    reporter = self.backupDatabase(archive)
+                    reporters.append(reporter)
 
-      if self.mailto:
-        self.message("Sending report to %s for %s" % (self.mailto, self.source.description))
-        self.sendReport(reporters)
+                if filesystem is True:
+                    reporter = self.backupFilesystem(archive)
+                    reporters.append(reporter)
 
-    except (DBError, FSError, S3Error) as e:
-      print e
+                archive.addManifest(timestamp)
+
+            reporters.append(archive)
+
+            # transfer archive to targets
+
+            for target in targets:
+                self.message("Transfering archive to %s" \
+                    % target.description
+                )
+                target.transferArchive(archive)
+                reporters.append(target)
+
+            # remove archive
+
+            if attic:
+                archive.rename(attic)
+            else:
+                archive.remove()
+
+            # send report
+
+            if self.mailto:
+                self.message("Sending report to %s for %s" \
+                    % (self.mailto, self.source.description)
+                )
+                self.sendReport(reporters)
+
+        except (DBError, FSError, S3Error) as e:
+            print e
