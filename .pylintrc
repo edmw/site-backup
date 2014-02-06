@@ -62,3 +62,7 @@ max-attributes=12
 min-public-methods=2
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=20
+[REPORTS]
+# Template used to display messages.
+msg-template={path}:{line}: [{msg_id}({symbol}):{obj}] {msg}
+
