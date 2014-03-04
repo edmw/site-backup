@@ -37,11 +37,11 @@ class WP(Reporter, object):
         self.fspath = path
         self.fsconfig = os.path.join(path, "wp-config.php")
 
-        self.dbname = None
-        self.dbhost = None
-        self.dbprefix = None
-        self.dbuser = None
-        self.dbpass = None
+        self.dbname = ""
+        self.dbhost = ""
+        self.dbprefix = ""
+        self.dbuser = ""
+        self.dbpass = ""
         self.dbcharset = "utf-8"
 
         self.title = None
@@ -97,12 +97,6 @@ class WP(Reporter, object):
             r"^\s*\$table_prefix\s*=\s*[\'\"]([^\'\"]+)[\'\"]\s*;"
         )
 
-        self.dbname = ""
-        self.dbhost = "localhost"
-        self.dbuser = ""
-        self.dbpass = ""
-        self.dbprefix = ""
-        
         with open(self.fsconfig) as f:
             lines = f.read()
             for line in lines.splitlines():
@@ -148,12 +142,12 @@ class WP(Reporter, object):
             cursor = connection.cursor()
             cursor.execute(
                 "SELECT option_value FROM %soptions"
-                "WHERE option_name = 'blogname'" % prefix
+                " WHERE option_name = 'blogname'" % self.dbprefix
             )
             self.title = cursor.fetchone()[0]
             cursor.execute(
                 "SELECT option_value FROM %soptions"
-                "WHERE option_name = 'admin_email'" % prefix
+                " WHERE option_name = 'admin_email'" % prefix
             )
             self.email = cursor.fetchone()[0]
 
