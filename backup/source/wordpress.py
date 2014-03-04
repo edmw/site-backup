@@ -97,6 +97,12 @@ class WP(Reporter, object):
             r"^\s*\$table_prefix\s*=\s*[\'\"]([^\'\"]+)[\'\"]\s*;"
         )
 
+        self.dbname = ""
+        self.dbhost = "localhost"
+        self.dbuser = ""
+        self.dbpass = ""
+        self.dbprefix = ""
+        
         with open(self.fsconfig) as f:
             lines = f.read()
             for line in lines.splitlines():
