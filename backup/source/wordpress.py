@@ -97,7 +97,6 @@ class WP(Reporter, object):
             r"^\s*\$table_prefix\s*=\s*[\'\"]([^\'\"]+)[\'\"]\s*;"
         )
 
-        print self.fsconfig
         with open(self.fsconfig) as f:
             lines = f.read()
             for line in lines.splitlines():
