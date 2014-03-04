@@ -139,15 +139,16 @@ class WP(Reporter, object):
                 charset=self.dbcharset,
                 use_unicode=True
             )
+            prefix = MySQLdb.escape_string(self.dbprefix)
             cursor = connection.cursor()
             cursor.execute(
                 "SELECT option_value FROM %soptions"
-                "WHERE option_name = 'blogname'" % self.dbprefix
+                "WHERE option_name = 'blogname'" % prefix
             )
             self.title = cursor.fetchone()[0]
             cursor.execute(
                 "SELECT option_value FROM %soptions"
-                "WHERE option_name = 'admin_email'" % self.dbprefix
+                "WHERE option_name = 'admin_email'" % prefix
             )
             self.email = cursor.fetchone()[0]
 
