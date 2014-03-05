@@ -13,6 +13,7 @@ import argparse
 from backup import Backup
 from backup.source.wordpress import WP, WPError
 from backup.target.s3 import S3
+from backup.tools.mailer import Mailer
 
 ##     ##    ###    #### ##    ##
 ###   ###   ## ##    ##  ###   ##
@@ -102,9 +103,17 @@ def main(args=None):
 
     group_report = parser.add_argument_group(
         'report options', '')
-    group_report.add_argument('--mail-from', action='store', metavar='MAIL',
+    group_report.add_argument('--mail-from',
+        action='store', metavar='MAIL',
         help='sender address for report mails')
-    group_report.add_argument('--mail-to-admin', action='store_true',
+    group_report.add_argument('--mail-to',
+        action='store', metavar='MAIL',
+        help='recipient address for report mails')
+    group_report.add_argument('--mail-to-certificate',
+        action='store', metavar='FILE',
+        help='certificate to encrypt mail to recipient for report mails')
+    group_report.add_argument('--mail-to-admin',
+        action='store_true',
         help='send report to wordpress administrator')
 
     arguments = parser.parse_args() if args == None else parser.parse_args(args)
@@ -142,14 +151,20 @@ def main(args=None):
         )
         targets.append(s3target)
 
-    # initialize options
+    # initialize mailer
 
-    mailto = source.email if arguments.mail_to_admin else None
-    mailfrom = arguments.mail_from
+    mailer = Mailer()
+    if arguments.mail_to:
+        mailer.addRecipient(arguments.mail_to,
+            certificate=arguments.mail_to_certificate
+        )
+    if arguments.mail_to_admin:
+        mailer.addRecipient(source.email)
+    mailer.setSender(arguments.mail_from)
 
     # initialize and execute backup
 
-    backup = Backup(source, mailto, mailfrom, quiet=arguments.quiet)
+    backup = Backup(source, mailer=mailer, quiet=arguments.quiet)
     backup.execute(
         targets=targets,
         database=arguments.database,

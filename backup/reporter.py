@@ -1,4 +1,5 @@
 # coding: utf-8
+
 """
 Mixin and Decorators to collect and report
 success and failure of function calls. 

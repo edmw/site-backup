@@ -7,7 +7,6 @@ Create a backup archive from a database and a filesystem.
 __version__ = "1.0.0"
 
 import sys, os, os.path
-import subprocess
 
 from backup.archive import Archive
 from backup.database import DB, DBError
@@ -24,10 +23,9 @@ class Backup(object):
 
     """
 
-    def __init__(self, source, mailto, mailfrom, quiet=False):
+    def __init__(self, source, mailer=None, quiet=False):
         self.source = source
-        self.mailto = mailto
-        self.mailfrom = mailfrom
+        self.mailer = mailer
         self.quiet = quiet
 
     def message(self, text):
@@ -68,7 +66,6 @@ class Backup(object):
     def sendReport(self, reporters):
         """ Sends a report with the results of the archive creation.
         """
-        from email.mime.text import MIMEText
 
         reports = []
         for reporter in reporters:
@@ -79,17 +76,8 @@ class Backup(object):
 
         subject = "[BACKUP] Archive for %s" % self.source.description
 
-        mail = MIMEText(text)
-        mail['Subject'] = subject
-        mail['To'] = self.mailto
-        mail['From'] = self.mailfrom
-
-#        process = 
-        process = subprocess.Popen(
-            ["/usr/sbin/sendmail", "-oi", "-t"],
-            stdin=subprocess.PIPE,
-        )
-        process.communicate(mail.as_string())
+        if self.mailer:
+            self.mailer.sendMail(text, subject=subject)
 
     def execute(self,
             targets=None, database=False, filesystem=False, attic=None):
@@ -150,10 +138,11 @@ class Backup(object):
 
             # send report
 
-            if self.mailto:
-                self.message("Sending report to %s for %s" \
-                    % (self.mailto, self.source.description)
-                )
+            if self.mailer:
+                self.message("Sending report to %s for %s" % (
+                    self.mailer.recipients_as_string(),
+                    self.source.description,
+                ))
                 self.sendReport(reporters)
 
         except (DBError, FSError, S3Error) as e:
