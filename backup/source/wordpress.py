@@ -31,7 +31,7 @@ class WPDatabaseError(WPError):
     pass
 
 class WP(Reporter, object):
-    def __init__(self, path):
+    def __init__(self, path, **kwargs):
         super(WP, self).__init__()
 
         self.fspath = path
@@ -39,6 +39,7 @@ class WP(Reporter, object):
 
         self.dbname = None
         self.dbhost = None
+        self.dbport = None
         self.dbprefix = None
         self.dbuser = None
         self.dbpass = None
@@ -57,6 +58,21 @@ class WP(Reporter, object):
             )
 
         self.parseConfiguration()
+
+        if kwargs:
+            if kwargs["dbname"]:
+                self.dbname = kwargs["dbname"]
+            if kwargs["dbhost"]:
+                self.dbhost = kwargs["dbhost"]
+            if kwargs["dbport"]:
+                self.dbport = kwargs["dbport"]
+            if kwargs["dbuser"]:
+                self.dbuser = kwargs["dbuser"]
+            if kwargs["dbpass"]:
+                self.dbpass = kwargs["dbpass"]
+            if kwargs["dbprefix"]:
+                self.dbprefix = kwargs["dbprefix"]
+
         self.queryDatabase()
 
         self.description = "Wordpress Blog '%s'" % self.title
@@ -73,6 +89,7 @@ class WP(Reporter, object):
                 ("WP(Email)", self.email),
                 ("DB(Name)", self.dbname),
                 ("DB(Host)", self.dbhost),
+                ("DB(Port)", self.dbport),
                 ("DB(Prefix)", self.dbprefix),
                 ("DB(User)", self.dbuser),
                 ("DB(Pass)", "*******" if self.dbpass else "-"),
@@ -126,6 +143,15 @@ class WP(Reporter, object):
                     self.dbprefix = m.group(1)
                     continue
 
+        # regular expression for hostname with optional port
+        re_hostname = r"^(?P<host>[^:]+):?(?P<port>[0-9]*)$"
+        
+        m = re.search(re_hostname, self.dbhost)
+        if (m):
+            self.dbhost = m.group("host")
+            self.dbport = int(m.group("port"))
+
+
     @ReporterCheck
     def queryDatabase(self):
         connection = None
@@ -133,21 +159,21 @@ class WP(Reporter, object):
             connection = MySQLdb.connect(
                 db=self.dbname,
                 host=self.dbhost,
+                port=self.dbport,
                 user=self.dbuser,
                 passwd=self.dbpass,
                 charset=self.dbcharset,
                 use_unicode=True
             )
-            prefix = MySQLdb.escape_string(self.dbprefix)
             cursor = connection.cursor()
             cursor.execute(
                 "SELECT option_value FROM %soptions"
-                "WHERE option_name = 'blogname'" % prefix
+                " WHERE option_name = 'blogname'" % self.dbprefix
             )
             self.title = cursor.fetchone()[0]
             cursor.execute(
                 "SELECT option_value FROM %soptions"
-                "WHERE option_name = 'admin_email'" % prefix
+                " WHERE option_name = 'admin_email'" % self.dbprefix
             )
             self.email = cursor.fetchone()[0]
 

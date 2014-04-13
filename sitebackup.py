@@ -26,7 +26,7 @@ DESCRIPTION = """
 This script creates a backup of a Wordpress Blog instance.
 
 It generates a compressed tar archive containing a dump
-of the wordpress database and copies of the wordpress filesystem.
+of the wordpress database and a copy of the wordpress filesystem.
 """
 
 EPILOG = """
@@ -73,6 +73,9 @@ def main(args=None):
         help='name for wordpress db')
     group_db.add_argument('--dbhost', action='store', metavar='HOST',
         help='hostname for wordpress db')
+    group_db.add_argument('--dbport', action='store', metavar='PORT',
+        type=int,
+        help='portnumber for wordpress db')
     group_db.add_argument('--dbuser', action='store', metavar='USER',
         help='username for wordpress db')
     group_db.add_argument('--dbpass', action='store', metavar='PASS',
@@ -112,21 +115,18 @@ def main(args=None):
     # initialize source
 
     try:
-        source = WP(arguments.path)
+        source = WP(
+            arguments.path,
+            dbname=arguments.db,
+            dbhost=arguments.dbhost,
+            dbport=arguments.dbport,
+            dbuser=arguments.dbuser,
+            dbpass=arguments.dbpass,
+            dbprefix=arguments.dbprefix
+        )
     except WPError as exception:
         print exception
         sys.exit(1)
-
-    if not arguments.db is None:
-        source.dbname = arguments.db
-    if not arguments.dbhost is None:
-        source.dbhost = arguments.dbhost
-    if not arguments.dbuser is None:
-        source.dbuser = arguments.dbuser
-    if not arguments.dbpass is None:
-        source.dbpass = arguments.dbpass
-    if not arguments.dbprefix is None:
-        source.dbprefix = arguments.dbprefix
 
     # initialize targets
 
