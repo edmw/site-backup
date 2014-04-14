@@ -84,7 +84,6 @@ class Backup(object):
         mail['To'] = self.mailto
         mail['From'] = self.mailfrom
 
-#        process = 
         process = subprocess.Popen(
             ["/usr/sbin/sendmail", "-oi", "-t"],
             stdin=subprocess.PIPE,
