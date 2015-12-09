@@ -148,8 +148,10 @@ class WP(Reporter, object):
         
         m = re.search(re_hostname, self.dbhost)
         if (m):
-            self.dbhost = m.group("host")
-            self.dbport = int(m.group("port"))
+            host = m.group("host")
+            port = m.group("port")
+            self.dbhost = host
+            self.dbport = int(port) if port else None
 
 
     @ReporterCheck
