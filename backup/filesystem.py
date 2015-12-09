@@ -8,7 +8,7 @@
 ##        ##  ##       ##       ##    ##    ##    ##    ##    ##    ##       ##     ## 
 ##       #### ######## ########  ######     ##     ######     ##    ######## ##     ## 
 
-import sys, os, os.path
+import sys, os, os.path, logging
 
 from backup.archive import Archive
 from backup.utils import formatkv
@@ -46,4 +46,5 @@ class FS(Reporter, object):
 
   @ReporterCheck
   def addToArchive(self, archive):
+    logging.debug("add path '%s' to archive '%s'" % (self.path, archive.name))
     archive.addPath(self.path, name=archive.name)

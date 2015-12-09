@@ -8,7 +8,7 @@
 ##     ## ##    ##  ##    ## ##     ##  ##    ## ##   ##       
 ##     ## ##     ##  ######  ##     ## ####    ###    ######## 
 
-import sys, os, os.path
+import sys, os, os.path, logging
 
 from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import formatkv
@@ -65,7 +65,9 @@ class Archive(Reporter, object):
     return os.path.join(path, self.filename)
 
   def __enter__(self):
-    self.tar = tarfile.open(self.tarname(), 'w:gz')
+    self.tar = tarfile.open(self.tarname(), 'w:gz',
+      debug=1 if logging.getLogger().getEffectiveLevel() == logging.DEBUG else 0
+    )
     return self
 
   def __exit__(self, type, value, traceback):

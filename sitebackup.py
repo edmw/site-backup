@@ -9,6 +9,7 @@ Try 'python sitebackup.py -h' for usage information.
 
 import sys, os, os.path
 import argparse
+import logging
 
 from backup import Backup
 from backup.source.wordpress import WP, WPError
@@ -60,6 +61,12 @@ def main(args=None):
     parser.add_argument('path', action='store',
         type=dir_argument,
         help='path to wordpress instance')
+    parser.add_argument('-v', '--verbose', action='store_const',
+        dest='loglevel', const=logging.INFO,
+        help='enable log messages')
+    parser.add_argument('-d', '--debug', action='store_const',
+        dest='loglevel', const=logging.DEBUG, default=logging.WARN,
+        help='enable debug messages')
     parser.add_argument('-q', '--quiet', action='store_true',
         help='do not print status messages')
     parser.add_argument('--database', action='store_true',
@@ -111,6 +118,12 @@ def main(args=None):
         help='send report to wordpress administrator')
 
     arguments = parser.parse_args() if args == None else parser.parse_args(args)
+
+    # logging
+    logging.basicConfig(
+        level=arguments.loglevel,
+        format='%(asctime)s - %(filename)s:%(funcName)s - %(levelname)s - %(message)s'
+    )
 
     # initialize source
 
