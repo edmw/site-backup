@@ -129,7 +129,7 @@ def main(args=None):
 
     try:
         source = WP(
-            arguments.path,
+            unicode(arguments.path),
             dbname=arguments.db,
             dbhost=arguments.dbhost,
             dbport=arguments.dbport,
