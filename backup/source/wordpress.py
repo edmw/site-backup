@@ -39,7 +39,7 @@ class WP(Reporter, object):
 
         self.dbname = None
         self.dbhost = None
-        self.dbport = None
+        self.dbport = 3306
         self.dbprefix = None
         self.dbuser = None
         self.dbpass = None
@@ -151,7 +151,7 @@ class WP(Reporter, object):
             host = m.group("host")
             port = m.group("port")
             self.dbhost = host
-            self.dbport = int(port) if port else None
+            self.dbport = int(port) if port else self.dbport
 
 
     @ReporterCheck
