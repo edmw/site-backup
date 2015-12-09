@@ -17,6 +17,8 @@ from backup.archive import Archive
 from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import formatkv
 
+import humanfriendly
+
 class DBError(Exception):
   def __init__(self, db, message):
     self.db = db
@@ -26,6 +28,17 @@ class DBError(Exception):
 
 class DBAccessDeniedError(DBError):
   pass
+
+class DBResult(collections.namedtuple('Result', ['size', 'numberOfTables'])):
+    """ Class for results of db operations with proper formatting. """
+
+    __slots__ = ()
+
+    def __str__(self):
+        return "Result(size=%s, numberOfTables=%d)" % (
+          humanfriendly.format_size(self.size),
+          self.numberOfTables
+        )
 
 class DB(Reporter, object):
   def __init__(self, db, host, user, password, prefix):
@@ -74,8 +87,6 @@ class DB(Reporter, object):
 
   @ReporterCheckResult
   def dumpToArchive(self, archive):
-    Result = collections.namedtuple('Result', ['lengthOfDump', 'numberOfTables'])
-
     tables = self.tables()
 
     p = subprocess.Popen(
@@ -102,4 +113,4 @@ class DB(Reporter, object):
     f.write(stdoutdata)
     archive.addArchiveFile(f)
 
-    return Result(len(stdoutdata), len(tables))
+    return DBResult(len(stdoutdata), len(tables))

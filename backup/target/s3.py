@@ -24,6 +24,7 @@ import boto
 import boto.s3.connection
 import socket
 
+import humanfriendly
 
 class S3Error(Exception):
     """ Base Exception for errors while using a cloud service. """
@@ -36,6 +37,13 @@ class S3Error(Exception):
     def __str__(self):
         return "S3Error(%s)" % repr(self.message)
 
+class S3Result(collections.namedtuple('Result', ['size'])):
+    """ Class for results of s3 operations with proper formatting. """
+
+    __slots__ = ()
+
+    def __str__(self):
+        return "Result(size=%s)" % (humanfriendly.format_size(self.size))
 
 class S3(Reporter, object):
     """ Class using a cloud service with the S3 API to transfer an archive.
@@ -87,8 +95,6 @@ class S3(Reporter, object):
         Returns the size of the transferred file on success.
 
         """
-        Result = collections.namedtuple('Result', ['size'])
-
         try:
             if self.connection.lookup(self.bucket):
                 bucket = self.connection.get_bucket(self.bucket)
@@ -101,7 +107,7 @@ class S3(Reporter, object):
                 cb=self.progress, num_cb=10
             )
 
-            return Result(key.size)
+            return S3Result(key.size)
 
         except boto.exception.S3ResponseError as e:
             raise S3Error(self, repr(e))

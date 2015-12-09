@@ -20,6 +20,16 @@ import tarfile
 
 from StringIO import StringIO
 
+import humanfriendly
+
+class ArchiveResult(collections.namedtuple('Result', ['size'])):
+    """ Class for results of archive operations with proper formatting. """
+
+    __slots__ = ()
+
+    def __str__(self):
+        return "Result(size=%s)" % (humanfriendly.format_size(self.size))
+
 class ArchiveFile(object):
   def __init__(self, name):
     super(ArchiveFile, self).__init__()
@@ -73,8 +83,7 @@ class Archive(Reporter, object):
   def __exit__(self, type, value, traceback):
     self.tar.close()
 
-    Result = collections.namedtuple("Result", ["size"])
-    self.storeResult("createArchive", Result(os.path.getsize(self.tarname())))
+    self.storeResult("createArchive", ArchiveResult(os.path.getsize(self.tarname())))
 
   def createArchiveFile(self, name):
     return ArchiveFile(name)
