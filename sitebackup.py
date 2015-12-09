@@ -50,10 +50,16 @@ def dir_argument(string):
             )
     return string
 
+class ArgumentParser(argparse.ArgumentParser):
+
+    def print_help(self):
+        import humanfriendly.terminal
+        humanfriendly.terminal.usage(self.format_help())
+
 def main(args=None):
     """ Main: parse arguments and run backup. """
 
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description=DESCRIPTION,
         epilog=EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter
