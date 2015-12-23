@@ -56,7 +56,7 @@ by specifing the correspondent command line options.
 Requirements
 ------------
 
-  * Python >= 2.6
+  * Python 2 (>= 2.6)
   * MySQLdb
   * argparse.py
   * boto - https://github.com/boto/boto
