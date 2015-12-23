@@ -16,7 +16,7 @@ from backup.target.s3 import S3, S3Error
 from backup.utils import LF, LFLF, SPACE, timestamp
 
 class Backup(object):
-    """ Class to create an archive from a database and a filesystem.
+    """ Class to create a backup from a database and a filesystem.
 
     To use initialize with a source and call execute with the desired
     targets. See backup.source for available sources and backup.target for
@@ -93,17 +93,17 @@ class Backup(object):
     def execute(self,
             targets=None, database=False, filesystem=False, attic=None):
 
-        """ Perfoms the creation of an archive.
+        """ Perfoms the creation of a backup.
 
             The flags database and filesystem specify which data should be
-            included in the archive. Setting both flags to False will result
-            in an empty archive.
+            included in the backup. Setting both flags to False will result
+            in an empty backup.
 
-            The archive will be transferred to each of the given targets.
+            The backup will be transferred to each of the given targets.
 
-            If attic is given the archive file will be renamed to its value.
-            Otherwise the archive file will be deleted (after it was
-            transferred to the given targets).
+            If attic is given the backup file will be renamed to its value.
+            Otherwise the backup file will be deleted (after it was
+            transferred to the given targets, of course).
 
         """
         ts = timestamp()

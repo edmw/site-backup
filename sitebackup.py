@@ -1,5 +1,13 @@
 #!/usr/bin/python
 # coding: utf-8
+#
+# Dependencies:
+# pip install MySQL-python
+# pip install boto3
+# pip install humanfriendly
+#
+# Dependencies (2.6):
+# pip install argparse
 
 """
 Script to backup a Wordpress Blog instance.
@@ -57,7 +65,7 @@ class ArgumentParser(argparse.ArgumentParser):
         humanfriendly.terminal.usage(self.format_help())
 
 def main(args=None):
-    """ Main: parse arguments and run backup. """
+    """ Main: parse arguments and run. """
 
     parser = ArgumentParser(
         description=DESCRIPTION,
@@ -68,7 +76,7 @@ def main(args=None):
         type=dir_argument,
         help='path to wordpress instance')
     parser.add_argument('-v', '--verbose', action='store_const',
-        dest='loglevel', const=logging.INFO,
+        dest='loglevel', const=logging.INFO, default=logging.WARN,
         help='enable log messages')
     parser.add_argument('-d', '--debug', action='store_const',
         dest='loglevel', const=logging.DEBUG, default=logging.WARN,
@@ -152,7 +160,7 @@ def main(args=None):
     targets = []
 
     if arguments.s3:
-        # transfer archive to s3 service
+        # transfer backup to s3 service
         s3target = S3(
             arguments.s3,
             arguments.s3accesskey,

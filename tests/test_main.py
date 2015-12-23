@@ -31,7 +31,7 @@ def testWithNoArguments(patchedBackup, patchedWP, *args):
     wp = setupWP(patchedWP)
     bup = patchedBackup()
     result = main(["path_for_test_with_no_arguments"])
-    patchedWP.assert_called_once_with('path_for_test_with_no_arguments')
+    patchedWP.assert_called_once_with('path_for_test_with_no_arguments', dbhost=None, dbname=None, dbpass=None, dbport=None, dbprefix=None, dbuser=None)
     # configuration should be unchanged
     assert wp.dbname == None
     assert wp.dbhost == None
@@ -53,7 +53,7 @@ def testWithArguments(patchedBackup, patchedWP, *args):
     # test 1: overwrite database configuration
     result = main(["--db=wpdb", "--dbhost=localhost", "--dbuser=michael", "--dbpass=123456", "--dbprefix=wp", "path_for_test_with_db_arguments"])
     # configuration should be taken from arguments
-    patchedWP.assert_called_once_with('path_for_test_with_db_arguments')
+    patchedWP.assert_called_once_with('path_for_test_with_db_arguments', dbhost='localhost', dbname='wpdb', dbpass='123456', dbport=None, dbprefix='wp', dbuser='michael')
     assert wp.dbname == "wpdb"
     assert wp.dbhost == "localhost"
     assert wp.dbuser == "michael"
