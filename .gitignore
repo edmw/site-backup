@@ -1,4 +1,10 @@
-._*
 *.py[cod]
-.cache
+__pycache__
 
+.pytest_cache/
+
+# OSX
+._*
+
+# VIM
+*.bak
