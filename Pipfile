@@ -1,0 +1,19 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "*"
+pytest-logging = "*"
+mock = "*"
+
+[packages]
+boto = "*"
+mysqlclient = "*"
+coloredlogs = "*"
+python-dateutil = "*"
+humanfriendly = "*"
+
+[requires]
+python_version = "3.5"
