@@ -1,6 +1,6 @@
 # coding: utf-8
 
-import pytest, mock
+import pytest
 
 from backup.utils import slugify
 
