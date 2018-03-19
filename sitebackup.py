@@ -143,7 +143,7 @@ def main(args=None):
 
     try:
         source = WP(
-            unicode(arguments.path),
+            arguments.path,
             dbname=arguments.db,
             dbhost=arguments.dbhost,
             dbport=arguments.dbport,
@@ -152,7 +152,7 @@ def main(args=None):
             dbprefix=arguments.dbprefix
         )
     except WPError as exception:
-        print exception
+        print(exception)
         sys.exit(1)
 
     # initialize targets

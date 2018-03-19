@@ -52,7 +52,7 @@ class Reporter(object):
   def reportResults(self):
     """ Report results as fomatted string of key and value pairs.
     """
-    return formatkv(self.results.iteritems())
+    return formatkv(self.results.items())
 
 def ReporterCheck(function):
   """ This decorator for a function will store a success result
@@ -62,9 +62,9 @@ def ReporterCheck(function):
   def checkedFunction(self, *args, **kwargs):
     try:
       function(self, *args, **kwargs)
-      self.storeResult(function.func_name, True)
+      self.storeResult(function.__name__, True)
     except:
-      self.storeResult(function.func_name, False)
+      self.storeResult(function.__name__, False)
       raise
   return checkedFunction
 
@@ -76,8 +76,8 @@ def ReporterCheckResult(function):
   def checkedFunction(self, *args, **kwargs):
     try:
       result = function(self, *args, **kwargs)
-      self.storeResult(function.func_name, result)
+      self.storeResult(function.__name__, result)
     except:
-      self.storeResult(function.func_name, False)
+      self.storeResult(function.__name__, False)
       raise
   return checkedFunction

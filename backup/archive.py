@@ -18,7 +18,7 @@ import collections
 
 import tarfile
 
-from StringIO import StringIO
+from io import StringIO, BytesIO
 
 import humanfriendly
 
@@ -31,21 +31,24 @@ class ArchiveResult(collections.namedtuple('Result', ['size'])):
         return "Result(size=%s)" % (humanfriendly.format_size(self.size))
 
 class ArchiveFile(object):
-  def __init__(self, name):
+  def __init__(self, name, binmode=False):
     super(ArchiveFile, self).__init__()
 
     self.name = name
 
+    self.binmode = binmode
+
     self.ctime = time.time()
     self.mtime = self.ctime
 
-    self.handle = StringIO()
+    self.handle = BytesIO()
 
   def write(self, data):
-    self.handle.write(data)
+    self.handle.write(data if self.binmode else data.encode())
 
-  def writeline(self, text):
-    self.handle.write(text + '\n')
+  def writeline(self, data):
+    self.handle.write(data if self.binmode else data.encode())
+    self.handle.write(b'\n')
 
   def size(self):
     self.handle.seek(0, os.SEEK_END)
@@ -85,9 +88,9 @@ class Archive(Reporter, object):
 
     self.storeResult("createArchive", ArchiveResult(os.path.getsize(self.tarname())))
 
-  def createArchiveFile(self, name):
-    return ArchiveFile(name)
-    
+  def createArchiveFile(self, name, binmode=False):
+    return ArchiveFile(name, binmode=binmode)
+
   @ReporterCheckResult
   def addArchiveFile(self, archivefile):
     tarinfo = tarfile.TarInfo(archivefile.name)

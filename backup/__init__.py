@@ -3,6 +3,7 @@
 """
 Create a backup archive from a database and a filesystem.
 """
+from __future__ import print_function
 
 __version__ = "1.0.0"
 
@@ -33,7 +34,7 @@ class Backup(object):
     def message(self, text):
         """ Prints a message if not told to be quiet. """
         if not self.quiet:
-            print text
+            print(text)
 
     def backupDatabase(self, archive):
         """ Creates a database backup and stores it into the archive.
@@ -69,6 +70,7 @@ class Backup(object):
         """ Sends a report with the results of the archive creation.
         """
         from email.mime.text import MIMEText
+        from email.header import Header
 
         reports = []
         for reporter in reporters:
@@ -79,8 +81,8 @@ class Backup(object):
 
         subject = "[BACKUP] Archive for %s" % self.source.description
 
-        mail = MIMEText(text)
-        mail['Subject'] = subject
+        mail = MIMEText(text.encode('utf-8'), 'plain', 'utf-8')
+        mail['Subject'] = Header(subject, 'utf-8')
         mail['To'] = self.mailto
         mail['From'] = self.mailfrom
 
@@ -88,7 +90,7 @@ class Backup(object):
             ["/usr/sbin/sendmail", "-oi", "-t"],
             stdin=subprocess.PIPE,
         )
-        process.communicate(mail.as_string())
+        process.communicate(mail.as_bytes())
 
     def execute(self,
             targets=None, database=False, filesystem=False, attic=None):
@@ -156,4 +158,4 @@ class Backup(object):
                 self.sendReport(reporters)
 
         except (DBError, FSError, S3Error) as e:
-            print e
+            print(e)

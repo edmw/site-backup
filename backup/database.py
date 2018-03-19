@@ -70,7 +70,7 @@ class DB(Reporter, object):
         "--skip-column-names",
         "--execute=show tables like \"%s%%\"" % self.prefix,
       ],
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
     )
 
     (stdoutdata, stderrdata) = p.communicate()
@@ -83,7 +83,7 @@ class DB(Reporter, object):
           raise DBAccessDeniedError(self, message)
       raise DBError(self, message) 
 
-    return [line for line in stdoutdata.split('\n') if len(line.strip()) > 0]
+    return [line for line in stdoutdata.splitlines() if len(line.strip()) > 0]
 
   @ReporterCheckResult
   def dumpToArchive(self, archive):
@@ -109,7 +109,7 @@ class DB(Reporter, object):
         message = str(stderrdata).strip()
       raise DBError(self, message)
 
-    f = archive.createArchiveFile("%s-db.sql" % archive.name)
+    f = archive.createArchiveFile("%s-db.sql" % archive.name, binmode=True)
     f.write(stdoutdata)
     archive.addArchiveFile(f)
 
