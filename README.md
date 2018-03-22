@@ -56,9 +56,9 @@ by specifing the correspondent command line options.
 Requirements
 ------------
 
-  * Python 2 (>= 2.6)
-  * MySQLdb
-  * argparse.py
-  * boto - https://github.com/boto/boto
-  * humanfriendly - https://github.com/xolox/python-humanfriendly
-
+  * Python 3
+  * PyMySQL (MIT) - https://github.com/PyMySQL/PyMySQL
+  * boto (MIT) - https://github.com/boto/boto
+  * dateutil (BSD) - https://github.com/dateutil/dateutil
+  * humanfriendly (MIT) - https://github.com/xolox/python-humanfriendly
+  * coloredlogs (MIT) - https://github.com/xolox/python-coloredlogs

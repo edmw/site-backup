@@ -14,7 +14,7 @@ import re
 from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import slugify, formatkv
 
-import MySQLdb
+import pymysql as mysql
 
 class WPError(Exception):
     def __init__(self, wp, message):
@@ -145,7 +145,7 @@ class WP(Reporter, object):
 
         # regular expression for hostname with optional port
         re_hostname = r"^(?P<host>[^:]+):?(?P<port>[0-9]*)$"
-        
+
         m = re.search(re_hostname, self.dbhost)
         if (m):
             host = m.group("host")
@@ -158,12 +158,12 @@ class WP(Reporter, object):
     def queryDatabase(self):
         connection = None
         try:
-            connection = MySQLdb.connect(
+            connection = mysql.connect(
                 db=self.dbname,
                 host=self.dbhost,
                 port=self.dbport,
                 user=self.dbuser,
-                passwd=self.dbpass,
+                password=self.dbpass,
                 charset=self.dbcharset,
                 use_unicode=True
             )

@@ -10,10 +10,10 @@ mock = "*"
 
 [packages]
 boto = "*"
-mysqlclient = "*"
 coloredlogs = "*"
 python-dateutil = "*"
 humanfriendly = "*"
+pymysql = "*"
 
 [requires]
 python_version = "3.5"
