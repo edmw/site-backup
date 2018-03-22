@@ -11,7 +11,7 @@
 import sys, os, os.path, logging
 
 from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
-from backup.utils import formatkv
+from backup.utils import formatkv, timestamp4now, timestamp2date
 
 import time
 import collections
@@ -59,15 +59,37 @@ class ArchiveFile(object):
     return self.handle
 
 class Archive(Reporter, object):
-  def __init__(self, name):
+  def __init__(self, label, timestamp=None):
     super(Archive, self).__init__()
 
-    self.name = name
+    self.timestamp = timestamp or timestamp4now()
+
+    self.name = "{}-{}".format(label, self.timestamp)
     self.path = '.'
 
-    self.filename = "%s.tgz" % self.name
+    self.ctime = timestamp2date(self.timestamp)
+
+    self.filename = "{}.tgz".format(self.name)
 
     self.tar = None
+
+  @classmethod
+  def fromfilename(cls, filename, check_label=None):
+    import re
+
+    m = re.match("^(.*)-([^-]+)\.tgz$", filename)
+    if not m:
+        raise ValueError("filename '{}' invalid format".format(filename))
+
+    label, timestamp = m.groups()
+
+    if check_label and label != check_label:
+        raise ValueError("filename '{}' not matching label '{}'".format(filename, check_label))
+
+    return cls(label, timestamp)
+
+  def __repr__(self):
+    return "Archive[name={}, timestamp={}]".format(self.name, self.timestamp)
 
   def __str__(self):
     return formatkv([("Name", self.name)], title="ARCHIVE")

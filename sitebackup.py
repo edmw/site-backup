@@ -1,13 +1,5 @@
 #!/usr/bin/python
 # coding: utf-8
-#
-# Dependencies:
-# pip install MySQL-python
-# pip install boto3
-# pip install humanfriendly
-#
-# Dependencies (2.6):
-# pip install argparse
 
 """
 Script to backup a Wordpress Blog instance.
@@ -15,13 +7,16 @@ Script to backup a Wordpress Blog instance.
 Try 'python sitebackup.py -h' for usage information.
 """
 
+
 import sys, os, os.path
 import argparse
+import functools
 import logging
 
 from backup import Backup
 from backup.source.wordpress import WP, WPError
 from backup.target.s3 import S3
+from backup.thinning import ThinningStrategy
 
 ##     ##    ###    #### ##    ##
 ###   ###   ## ##    ##  ###   ##
@@ -47,6 +42,14 @@ The database parameters from the configuration file can be overwritten
 by specifing the correspondent command line options.
 
 """
+
+def value_argument(string, callee=None):
+    if callee:
+        try:
+            return callee(string)
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(str(e))
+    raise argparse.ArgumentTypeError("Internal Error")
 
 def dir_argument(string):
     """ Helper for argparse
@@ -83,10 +86,15 @@ def main(args=None):
         help='enable debug messages')
     parser.add_argument('-q', '--quiet', action='store_true',
         help='do not print status messages')
+    parser.add_argument('--dry', action='store_true',
+        help='perform dry run: do not store or delete any archives')
     parser.add_argument('--database', action='store_true',
         help='backup wordpress database')
     parser.add_argument('--filesystem', action='store_true',
         help='backup wordpress filesystem')
+    parser.add_argument('--thinning', action='store', metavar='STRATEGY',
+        type=functools.partial(value_argument, callee=ThinningStrategy.fromArgument),
+        help='thin out backups at targets (except local target) using the specified strategy')
 
     group_db = parser.add_argument_group(
         'database backup options', '')
@@ -134,9 +142,11 @@ def main(args=None):
     arguments = parser.parse_args() if args == None else parser.parse_args(args)
 
     # logging
-    logging.basicConfig(
+    import coloredlogs
+    coloredlogs.install(
         level=arguments.loglevel,
-        format='%(asctime)s - %(filename)s:%(funcName)s - %(levelname)s - %(message)s'
+        format='%(asctime)s - %(filename)s:%(funcName)s - %(levelname)s - %(message)s',
+        isatty=True
     )
 
     # initialize source
@@ -165,7 +175,7 @@ def main(args=None):
             arguments.s3,
             arguments.s3accesskey,
             arguments.s3secretkey,
-            arguments.s3bucket if arguments.s3bucket else source.slug,
+            arguments.s3bucket if arguments.s3bucket else source.slug
         )
         targets.append(s3target)
 
@@ -181,8 +191,11 @@ def main(args=None):
         targets=targets,
         database=arguments.database,
         filesystem=arguments.filesystem,
-        attic=arguments.attic
+        thinning=arguments.thinning,
+        attic=arguments.attic,
+        dry=arguments.dry
     )
 
 if __name__ == "__main__":
     main()
+

@@ -2,7 +2,13 @@
 
 import pytest
 
-from backup.utils import slugify
+from backup.utils import timestamp4now, timestamp2date, slugify
+
+def testTimestamp():
+    from datetime import datetime
+    now = datetime.now().replace(microsecond=0)
+    timestamp = timestamp4now(now=now)
+    assert(timestamp2date(timestamp) == now)
 
 def testSlugify():
 	assert slugify(None) == None

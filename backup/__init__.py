@@ -9,12 +9,13 @@ __version__ = "1.0.0"
 
 import sys, os, os.path
 import subprocess
+import functools
 
 from backup.archive import Archive
 from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
 from backup.target.s3 import S3, S3Error
-from backup.utils import LF, LFLF, SPACE, timestamp
+from backup.utils import LF, LFLF, SPACE, timestamp4now
 
 class Backup(object):
     """ Class to create a backup from a database and a filesystem.
@@ -77,11 +78,13 @@ class Backup(object):
             setup = str(reporter)
             results = reporter.reportResults()
             reports.append(LF.join([setup, results]))
-        text = LFLF.join(reports)
+        report = LFLF.join(reports)
+
+        self.message(report)
 
         subject = "[BACKUP] Archive for %s" % self.source.description
 
-        mail = MIMEText(text.encode('utf-8'), 'plain', 'utf-8')
+        mail = MIMEText(report.encode('utf-8'), 'plain', 'utf-8')
         mail['Subject'] = Header(subject, 'utf-8')
         mail['To'] = self.mailto
         mail['From'] = self.mailfrom
@@ -93,7 +96,7 @@ class Backup(object):
         process.communicate(mail.as_bytes())
 
     def execute(self,
-            targets=None, database=False, filesystem=False, attic=None):
+            targets=None, database=False, filesystem=False, thinning=None, attic=None, dry=False):
 
         """ Perfoms the creation of a backup.
 
@@ -103,53 +106,82 @@ class Backup(object):
 
             The backup will be transferred to each of the given targets.
 
+            Each given target will be thinned out according to the given
+            thinning strategy.
+
             If attic is given the backup file will be renamed to its value.
             Otherwise the backup file will be deleted (after it was
             transferred to the given targets, of course).
 
         """
-        ts = timestamp()
+
+        def performThinning(strategy, archives):
+            inarchives, outarchives = strategy.executeOn(
+                archives, attr='ctime'
+            )
+
+            return (inarchives, outarchives)
 
         try:
             reporters = [self.source]
 
-            # create archive
+            # create archive (if requested)
 
-            archive = Archive("%s-%s" % (self.source.slug, ts))
-            with archive:
-                self.message("Creating archive for %s" \
-                    % self.source.description
-                )
+            if database or filesystem:
 
-                if database is True:
-                    reporter = self.backupDatabase(archive)
-                    reporters.append(reporter)
+                archive = Archive(self.source.slug)
+                with archive:
+                    self.message("Creating archive for %s" \
+                        % self.source.description
+                    )
 
-                if filesystem is True:
-                    reporter = self.backupFilesystem(archive)
-                    reporters.append(reporter)
+                    if database is True:
+                        reporter = self.backupDatabase(archive)
+                        reporters.append(reporter)
 
-                archive.addManifest(timestamp)
+                    if filesystem is True:
+                        reporter = self.backupFilesystem(archive)
+                        reporters.append(reporter)
 
-            reporters.append(archive)
+                    archive.addManifest(archive.timestamp)
 
-            # transfer archive to targets
+                reporters.append(archive)
 
-            for target in targets:
-                self.message("Transfering archive to %s" \
-                    % target.description
-                )
-                target.transferArchive(archive)
-                reporters.append(target)
+                # transfer archive to targets
+
+                for target in targets:
+                    self.message("Transfering archive to %s" \
+                        % target.description
+                    )
+                    target.transferArchive(archive, dry=dry)
+
+            else:
+                archive = None
+
+            # thin out target (if requested)
+
+            if thinning:
+                for target in targets:
+                    self.message("Thinning archives on {} using strategy '{}'".format(
+                        target.description, thinning))
+                    target.performThinning(
+                        self.source.slug,
+                        functools.partial(performThinning, thinning),
+                        dry=dry
+                    )
 
             # remove archive
 
-            if attic:
-                archive.rename(attic)
-            else:
-                archive.remove()
+            if archive:
+                if attic:
+                    archive.rename(attic)
+                else:
+                    archive.remove()
 
             # send report
+
+            if archive: reporters.append(archive)
+            if target: reporters.append(target)
 
             if self.mailto:
                 self.message("Sending report to %s for %s" \
