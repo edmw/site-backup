@@ -7,7 +7,8 @@ from __future__ import print_function
 
 __version__ = "1.0.0"
 
-import sys, os, os.path
+import sys
+import os
 import subprocess
 import functools
 
@@ -115,7 +116,8 @@ class Backup(object):
 
         """
 
-        def performThinning(strategy, archives):
+        def perform_thinning(strategy, archives):
+            """ Execute the given thinning strategy on the given archives. """
             inarchives, outarchives = strategy.executeOn(
                 archives, attr='ctime'
             )
@@ -166,7 +168,7 @@ class Backup(object):
                         target.description, thinning))
                     target.performThinning(
                         self.source.slug,
-                        functools.partial(performThinning, thinning),
+                        functools.partial(perform_thinning, thinning),
                         dry=dry
                     )
 
@@ -180,8 +182,10 @@ class Backup(object):
 
             # send report
 
-            if archive: reporters.append(archive)
-            if target: reporters.append(target)
+            if archive:
+                reporters.append(archive)
+            if target:
+                reporters.append(target)
 
             if self.mailto:
                 self.message("Sending report to %s for %s" \

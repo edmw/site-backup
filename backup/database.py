@@ -8,16 +8,15 @@
 ##     ## ##     ##    ##    ##     ## ##     ## ##     ## ##    ## ##       
 ########  ##     ##    ##    ##     ## ########  ##     ##  ######  ######## 
 
-import sys, os, os.path
-
+# 8 data types
 import collections
+# 17 concurrent execution
 import subprocess
 
-from backup.archive import Archive
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
-from backup.utils import formatkv
-
 import humanfriendly
+
+from backup.reporter import Reporter, ReporterCheckResult
+from backup.utils import formatkv
 
 class DBError(Exception):
   def __init__(self, db, message):

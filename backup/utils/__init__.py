@@ -23,8 +23,8 @@ def slugify(value):
   if not value is None:
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
-    value = re.sub('[^\w\s-]', '', value).strip().lower()
-    value = re.sub('[-\s]+', '-', value)
+    value = re.sub(r'[^\w\s-]', '', value).strip().lower()
+    value = re.sub(r'[-\s]+', '-', value)
   return value
 
 def formatkv(kv, title=None):
@@ -50,9 +50,9 @@ def formatsize(size, binary=False, format='%.1f'):
   if bytes < base:
     return '%d Bytes' % bytes
 
-
   for i, suffix in enumerate(suffixes):
     unit = base ** (i + 2)
     if bytes < unit:
       return (format + ' %s') % ((base * bytes / unit), suffix)
   return (format + ' %s') % ((base * bytes / unit), suffix)
+

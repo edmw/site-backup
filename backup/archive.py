@@ -1,26 +1,26 @@
 # coding: utf-8
 
-   ###    ########   ######  ##     ## #### ##     ## ######## 
-  ## ##   ##     ## ##    ## ##     ##  ##  ##     ## ##       
- ##   ##  ##     ## ##       ##     ##  ##  ##     ## ##       
-##     ## ########  ##       #########  ##  ##     ## ######   
-######### ##   ##   ##       ##     ##  ##   ##   ##  ##       
-##     ## ##    ##  ##    ## ##     ##  ##    ## ##   ##       
-##     ## ##     ##  ######  ##     ## ####    ###    ######## 
+   ###    ########   ######  ##     ## #### ##     ## ########
+  ## ##   ##     ## ##    ## ##     ##  ##  ##     ## ## 
+ ##   ##  ##     ## ##       ##     ##  ##  ##     ## ##
+##     ## ########  ##       #########  ##  ##     ## ######
+######### ##   ##   ##       ##     ##  ##   ##   ##  ##
+##     ## ##    ##  ##    ## ##     ##  ##    ## ##   ##
+##     ## ##     ##  ######  ##     ## ####    ###    ########
 
-import sys, os, os.path, logging
+import os
+import io
+import time
+import logging
+# 8 data types
+import collections
+# 13 data compression and archiving
+import tarfile
+
+import humanfriendly
 
 from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import formatkv, timestamp4now, timestamp2date
-
-import time
-import collections
-
-import tarfile
-
-from io import StringIO, BytesIO
-
-import humanfriendly
 
 class ArchiveResult(collections.namedtuple('Result', ['size'])):
     """ Class for results of archive operations with proper formatting. """
@@ -41,7 +41,7 @@ class ArchiveFile(object):
     self.ctime = time.time()
     self.mtime = self.ctime
 
-    self.handle = BytesIO()
+    self.handle = io.BytesIO()
 
   def write(self, data):
     self.handle.write(data if self.binmode else data.encode())
@@ -77,7 +77,7 @@ class Archive(Reporter, object):
   def fromfilename(cls, filename, check_label=None):
     import re
 
-    m = re.match("^(.*)-([^-]+)\.tgz$", filename)
+    m = re.match(r"^(.*)-([^-]+)\.tgz$", filename)
     if not m:
         raise ValueError("filename '{}' invalid format".format(filename))
 
@@ -105,7 +105,7 @@ class Archive(Reporter, object):
     )
     return self
 
-  def __exit__(self, type, value, traceback):
+  def __exit__(self, exc_type, exc_value, exc_traceback):
     self.tar.close()
 
     self.storeResult("createArchive", ArchiveResult(os.path.getsize(self.tarname())))
@@ -144,4 +144,4 @@ class Archive(Reporter, object):
     tarname = self.tarname()
     if os.path.isfile(tarname):
       os.remove(tarname)
-      
+ 

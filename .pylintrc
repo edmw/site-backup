@@ -36,7 +36,7 @@ no-docstring-rgx=__.*__
 docstring-min-length=-1
 [FORMAT]
 # Maximum number of characters on a single line.
-max-line-length=78
+max-line-length=100
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=(?:^[\s#]*$|^\s*(# )?<?https?://\S+>?$)
 # Maximum number of lines in a module

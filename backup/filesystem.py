@@ -8,11 +8,11 @@
 ##        ##  ##       ##       ##    ##    ##    ##    ##    ##    ##       ##     ## 
 ##       #### ######## ########  ######     ##     ######     ##    ######## ##     ## 
 
-import sys, os, os.path, logging
+import os
+import logging
 
-from backup.archive import Archive
 from backup.utils import formatkv
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
+from backup.reporter import Reporter, ReporterCheckResult
 
 class FSError(Exception):
   def __init__(self, fs, message):

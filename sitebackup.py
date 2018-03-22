@@ -7,8 +7,8 @@ Script to backup a Wordpress Blog instance.
 Try 'python sitebackup.py -h' for usage information.
 """
 
-
-import sys, os, os.path
+import sys
+import os
 import argparse
 import functools
 import logging
@@ -44,6 +44,9 @@ by specifing the correspondent command line options.
 """
 
 def value_argument(string, callee=None):
+    """ Helper for argparse
+    to create a value from the given argument using the given function.
+    """
     if callee:
         try:
             return callee(string)
@@ -53,17 +56,18 @@ def value_argument(string, callee=None):
 
 def dir_argument(string):
     """ Helper for argparse
-    to verify the given argument is an existing directory
+    to verify the given argument is an existing directory.
     """
     if not os.path.isdir(string):
         raise argparse.ArgumentTypeError(
-                "%r is not an existing directory" % string
-            )
+            "%r is not an existing directory" % string
+        )
     return string
 
 class ArgumentParser(argparse.ArgumentParser):
-
-    def print_help(self):
+    """ ArgumentParser with human friendly help. """
+    def print_help(self, file=None):
+        """ Print human friendly help. """
         import humanfriendly.terminal
         humanfriendly.terminal.usage(self.format_help())
 
@@ -139,7 +143,7 @@ def main(args=None):
     group_report.add_argument('--mail-to-admin', action='store_true',
         help='send report to wordpress administrator')
 
-    arguments = parser.parse_args() if args == None else parser.parse_args(args)
+    arguments = parser.parse_args() if args is None else parser.parse_args(args)
 
     # logging
     import coloredlogs
@@ -198,4 +202,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-
