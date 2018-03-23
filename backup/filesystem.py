@@ -12,7 +12,7 @@ import os
 import logging
 
 from backup.utils import formatkv
-from backup.reporter import Reporter, ReporterCheckResult
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 
 class FSError(Exception):
   def __init__(self, fs, message):

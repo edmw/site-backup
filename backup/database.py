@@ -15,7 +15,7 @@ import subprocess
 
 import humanfriendly
 
-from backup.reporter import Reporter, ReporterCheckResult
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import formatkv
 
 class DBError(Exception):
