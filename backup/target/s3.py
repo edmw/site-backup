@@ -112,13 +112,13 @@ class S3(Reporter, object):
         """
         if sys.stdin.isatty():
             if complete == 0:
-                self.progress_stime = time.time()
+                self.progress_stime = time.monotonic()
                 sys.stdout.write("|" + "-" * 10 + "|")
                 sys.stdout.write("\n")
                 sys.stdout.write("|")
             sys.stdout.write(".")
             if complete == total:
-                self.progress_etime = time.time()
+                self.progress_etime = time.monotonic()
                 sys.stdout.write("|")
                 sys.stdout.write("\n")
                 seconds = self.boto_progress_duration()

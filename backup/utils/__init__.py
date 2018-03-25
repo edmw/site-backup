@@ -30,7 +30,7 @@ def slugify(value):
 def formatkv(kv, title=None):
   out = list()
   if title:
-  	out.append("%s" % title)
+    out.append("%s" % title)
   for (k, v) in kv:
     out.append("    %s: %s" % (k, v))
   return "\n".join(out)

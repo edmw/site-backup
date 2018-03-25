@@ -7,14 +7,18 @@ from __future__ import print_function
 
 __version__ = "1.0.0"
 
+import time
 import subprocess
 import functools
 
+import humanfriendly
+
+from backup.reporter import Reporter, ReporterInspect
 from backup.archive import Archive
 from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
 from backup.target.s3 import S3, S3Error
-from backup.utils import LF, LFLF
+from backup.utils import LF, LFLF, formatkv
 
 
 """
@@ -28,7 +32,7 @@ from backup.utils import LF, LFLF
 """
 
 
-class Backup(object):
+class Backup(Reporter, object):
     """ Class to create a backup from a database and a filesystem.
 
     To use initialize with a source and call execute with the desired
@@ -38,10 +42,22 @@ class Backup(object):
     """
 
     def __init__(self, source, mailto, mailfrom, quiet=False):
+        super(Backup, self).__init__()
         self.source = source
         self.mailto = mailto
         self.mailfrom = mailfrom
         self.quiet = quiet
+        self.stime = 0
+        self.etime = 0
+
+    def __str__(self):
+        return formatkv(
+            [
+                ("Execution Time", humanfriendly.format_timespan(self.etime - self.stime)),
+                ("Report(To)", self.mailto),
+            ],
+            title="SITEBACKUP",
+        )
 
     def message(self, text):
         """ Prints a message if not told to be quiet. """
@@ -82,9 +98,14 @@ class Backup(object):
 
         reports = []
         for reporter in reporters:
-            setup = str(reporter)
+            out = [str(reporter)]
+            parameters = reporter.reportParameters()
+            if parameters:
+                out.append(parameters)
             results = reporter.reportResults()
-            reports.append(LF.join([setup, results]))
+            if results:
+                out.append(results)
+            reports.append(LF.join(out))
         report = LFLF.join(reports)
 
         self.message(report)
@@ -102,6 +123,10 @@ class Backup(object):
         )
         process.communicate(mail.as_bytes())
 
+    @ReporterInspect('dry')
+    @ReporterInspect('database')
+    @ReporterInspect('filesystem')
+    @ReporterInspect('thinning')
     def execute(
         self, targets=None, database=False, filesystem=False, thinning=None, attic=None, dry=False
     ):
@@ -132,7 +157,12 @@ class Backup(object):
             return (inarchives, outarchives)
 
         try:
-            reporters = [self.source]
+            # start of execution
+            self.stime = time.monotonic()
+
+            reporters = [self]
+
+            reporters.append(self.source)
 
             # create archive (if requested)
 
@@ -182,6 +212,9 @@ class Backup(object):
                 else:
                     archive.remove()
 
+            # end of execution
+            self.etime = time.monotonic()
+
             # send report
 
             if archive:
@@ -195,5 +228,8 @@ class Backup(object):
                 ))
                 self.sendReport(reporters)
 
+            return "OK"
+
         except (DBError, FSError, S3Error) as e:
             print(e)
+
