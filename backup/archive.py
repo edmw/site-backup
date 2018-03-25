@@ -138,15 +138,20 @@ class Archive(Reporter, object):
         f.writeline("Timestamp: {}".format(timestamp))
         self.addArchiveFile(f)
 
-    @ReporterCheck
+    @ReporterCheckResult
     def rename(self, path):
         tarname = self.tarname()
         if not path == self.path:
             self.path = path
-        os.rename(tarname, self.tarname())
+            destination_tarname = self.tarname()
+            os.rename(tarname, destination_tarname)
+            tarname = destination_tarname
+        return tarname
 
-    @ReporterCheck
+    @ReporterCheckResult
     def remove(self):
         tarname = self.tarname()
         if os.path.isfile(tarname):
             os.remove(tarname)
+        return tarname
+

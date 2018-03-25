@@ -22,6 +22,7 @@ Then call object.reportResults() any time to generate a report.
 import re
 
 from functools import wraps
+from collections import OrderedDict
 
 from backup.utils import formatkv
 
@@ -32,8 +33,8 @@ class Reporter(object):
   """ Mixin to store and report success and failure of function calls.
   """
   def __init__(self):
-    self.parameters = dict()
-    self.results = dict()
+    self.parameters = OrderedDict()
+    self.results = OrderedDict()
 
   def storeParameter(self, fname, name, value):
     """ Store parameter and value for the given function.
@@ -95,7 +96,7 @@ def ReporterInspect(name):
         def checkedFunction(self, *args, **kwargs):
             if name in kwargs:
                 self.storeParameter(function.__name__, name, kwargs[name])
-            function(self, *args, **kwargs)
+            return function(self, *args, **kwargs)
         return checkedFunction
     return wrap
 
@@ -122,6 +123,7 @@ def ReporterCheckResult(function):
     try:
       result = function(self, *args, **kwargs)
       self.storeResult(function.__name__, result)
+      return result
     except:
       self.storeResult(function.__name__, False)
       raise
