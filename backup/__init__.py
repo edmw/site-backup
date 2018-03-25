@@ -152,8 +152,6 @@ class Backup(object):
 
                     archive.addManifest(archive.timestamp)
 
-                reporters.append(archive)
-
                 # transfer archive to targets
 
                 for target in targets:
