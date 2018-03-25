@@ -7,8 +7,6 @@ from __future__ import print_function
 
 __version__ = "1.0.0"
 
-import sys
-import os
 import subprocess
 import functools
 
@@ -16,7 +14,19 @@ from backup.archive import Archive
 from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
 from backup.target.s3 import S3, S3Error
-from backup.utils import LF, LFLF, SPACE, timestamp4now
+from backup.utils import LF, LFLF
+
+
+"""
+    ########     ###     ######  ##    ## ##     ## ########
+    ##     ##   ## ##   ##    ## ##   ##  ##     ## ##     ##
+    ##     ##  ##   ##  ##       ##  ##   ##     ## ##     ##
+    ########  ##     ## ##       #####    ##     ## ########
+    ##     ## ######### ##       ##  ##   ##     ## ##
+    ##     ## ##     ## ##    ## ##   ##  ##     ## ##
+    ########  ##     ##  ######  ##    ##  #######  ##
+"""
+
 
 class Backup(object):
     """ Class to create a backup from a database and a filesystem.
@@ -41,9 +51,7 @@ class Backup(object):
     def backupDatabase(self, archive):
         """ Creates a database backup and stores it into the archive.
         """
-        self.message("Processing database of %s" \
-            % self.source.description
-        )
+        self.message("Processing database of {}".format(self.source.description))
 
         db = DB(
             self.source.dbname,
@@ -58,9 +66,7 @@ class Backup(object):
     def backupFilesystem(self, archive):
         """ Creates filesystem backup and stores it into the archive.
         """
-        self.message("Processing filesystem of %s" \
-            % self.source.description
-        )
+        self.message("Processing filesystem of {}".format(self.source.description))
 
         fs = FS(
             self.source.fspath
@@ -83,7 +89,7 @@ class Backup(object):
 
         self.message(report)
 
-        subject = "[BACKUP] Archive for %s" % self.source.description
+        subject = "[BACKUP] Archive for {}".format(self.source.description)
 
         mail = MIMEText(report.encode('utf-8'), 'plain', 'utf-8')
         mail['Subject'] = Header(subject, 'utf-8')
@@ -96,8 +102,9 @@ class Backup(object):
         )
         process.communicate(mail.as_bytes())
 
-    def execute(self,
-            targets=None, database=False, filesystem=False, thinning=None, attic=None, dry=False):
+    def execute(
+        self, targets=None, database=False, filesystem=False, thinning=None, attic=None, dry=False
+    ):
 
         """ Perfoms the creation of a backup.
 
@@ -133,9 +140,7 @@ class Backup(object):
 
                 archive = Archive(self.source.slug)
                 with archive:
-                    self.message("Creating archive for %s" \
-                        % self.source.description
-                    )
+                    self.message("Creating archive for {}".format(self.source.description))
 
                     if database is True:
                         reporter = self.backupDatabase(archive)
@@ -152,9 +157,7 @@ class Backup(object):
                 # transfer archive to targets
 
                 for target in targets:
-                    self.message("Transfering archive to %s" \
-                        % target.description
-                    )
+                    self.message("Transfering archive to {}".format(target.description))
                     target.transferArchive(archive, dry=dry)
 
             else:
@@ -165,7 +168,8 @@ class Backup(object):
             if thinning:
                 for target in targets:
                     self.message("Thinning archives on {} using strategy '{}'".format(
-                        target.description, thinning))
+                        target.description, thinning
+                    ))
                     target.performThinning(
                         self.source.slug,
                         functools.partial(perform_thinning, thinning),
@@ -188,9 +192,9 @@ class Backup(object):
                 reporters.append(target)
 
             if self.mailto:
-                self.message("Sending report to %s for %s" \
-                    % (self.mailto, self.source.description)
-                )
+                self.message("Sending report to {} for {}".format(
+                    self.mailto, self.source.description
+                ))
                 self.sendReport(reporters)
 
         except (DBError, FSError, S3Error) as e:
