@@ -38,13 +38,16 @@ class S3Error(Exception):
     def __str__(self):
         return "S3Error(%s)" % repr(self.message)
 
-class S3Result(collections.namedtuple('Result', ['size'])):
+class S3Result(collections.namedtuple('Result', ['size', 'duration'])):
     """ Class for results of s3 operations with proper formatting. """
 
     __slots__ = ()
 
     def __str__(self):
-        return "Result(size=%s)" % (humanfriendly.format_size(self.size))
+        return "Result(size={}, duration={})".format(
+            humanfriendly.format_size(self.size),
+            humanfriendly.format_timespan(self.duration)
+        )
 
 class S3ThinningResult(collections.namedtuple('ThinningResult', ['archivesRetained', 'archivesDeleted'])):
     """ Class for results of s3 thinning operations with proper formatting. """
@@ -83,9 +86,6 @@ class S3(Reporter, object):
             calling_format=boto.s3.connection.OrdinaryCallingFormat(),
         )
 
-        self.progress_stime = 0
-        self.progress_etime = 0
-
     def __str__(self):
         return formatkv(
             [
@@ -94,6 +94,13 @@ class S3(Reporter, object):
             ],
             title="S3"
         )
+
+    def boto_progress_start(self):
+        self.progress_stime = 0
+        self.progress_etime = 0
+
+    def boto_progress_duration(self):
+        return int(self.progress_etime - self.progress_stime)
 
     def boto_progress(self, complete, total):
         """ Progress handler for boto library.
@@ -114,10 +121,31 @@ class S3(Reporter, object):
                 self.progress_etime = time.time()
                 sys.stdout.write("|")
                 sys.stdout.write("\n")
-                seconds = int(self.progress_etime - self.progress_stime)
+                seconds = self.boto_progress_duration()
                 sys.stdout.write("%d seconds" % seconds)
                 sys.stdout.write("\n")
             sys.stdout.flush()
+
+    def listArchives(self, label=None):
+        try:
+            archives = []
+
+            bucket = self.connection.get_bucket(self.bucket)
+            for key in bucket.list():
+                try:
+                    archive = Archive.fromfilename(key.name, check_label=label)
+                except ValueError as e:
+                    raise S3Error(self, str(e))
+
+                if archive:
+                    archives.append(archive)
+
+            return archives
+
+        except boto.exception.S3ResponseError as e:
+            raise S3Error(self, repr(e))
+        except socket.gaierror as e:
+            raise S3Error(self, repr(e))
 
     @ReporterCheckResult
     def transferArchive(self, archive, dry=False):
@@ -129,6 +157,8 @@ class S3(Reporter, object):
 
         """
         try:
+            self.boto_progress_start()
+
             if self.connection.lookup(self.bucket):
                 bucket = self.connection.get_bucket(self.bucket)
             else:
@@ -140,10 +170,10 @@ class S3(Reporter, object):
                     archive.filename,
                     cb=self.boto_progress, num_cb=10
                 )
-                return S3Result(key.size)
+                return S3Result(key.size, self.boto_progress_duration())
 
             else:
-                return S3Result(0)
+                return S3Result(0, 0)
 
         except boto.exception.S3ResponseError as e:
             raise S3Error(self, repr(e))
@@ -160,19 +190,11 @@ class S3(Reporter, object):
 
         """
         try:
-            archives = []
-
-            bucket = self.connection.get_bucket(self.bucket)
-            for key in bucket.list():
-                try:
-                    archive = Archive.fromfilename(key.name, check_label=label)
-                except ValueError as e:
-                    raise S3Error(self, str(e))
-
-                if archive:
-                    archives.append(archive)
+            archives = self.listArchives(label)
 
             toRetain, toDelete = thinArchives(archives)
+
+            bucket = self.connection.get_bucket(self.bucket)
 
             if not dry:
                 for archive in toDelete:
