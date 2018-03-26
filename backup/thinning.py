@@ -170,7 +170,8 @@ class ThinOutStrategy(ThinningStrategy):
             in_dates, out_dates = map(add, [in_dates, out_dates], split_dates_in_span(week_start, week_end))
 
         # this is tricky: adjust to months (keep all dates inbetween)
-        weeks_end = fix - timedelta(days=self.days, weeks=self.weeks)
+        #weeks_end = tail(in_dates) or 
+        weeks_end = (fix - timedelta(days=self.days, weeks=self.weeks))
         fix_month = weeks_end.replace(day=1)
         logging.info("ADJUSTMENT {} - {}".format(fix_month, weeks_end))
         adjustment_dates = [d for d in dates if date_is_in_span(d, fix_month, weeks_end)]

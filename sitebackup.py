@@ -196,6 +196,10 @@ def main(args=None):
         '--mail-to-admin', action='store_true',
         help='send report to wordpress administrator'
     )
+    group_report.add_argument(
+        '--mail-to', action='store', metavar='MAIL',
+        help='recipient address for report mails'
+    )
 
     arguments = parser.parse_args() if args is None else parser.parse_args(args)
 
@@ -239,7 +243,11 @@ def main(args=None):
 
     # initialize options
 
-    mailto = source.email if arguments.mail_to_admin else None
+    mailto = []
+    if arguments.mail_to_admin:
+        mailto.append(source.email)
+    if arguments.mail_to:
+        mailto.append(arguments.mail_to)
     mailfrom = arguments.mail_from
 
     # initialize and execute backup

@@ -77,7 +77,8 @@ class S3(Reporter, object):
         self.secretkey = secretkey
         self.bucket = bucket
 
-        self.description = "S3 Service at %s" % self.host
+        self.label = "S3"
+        self.description = "{} Service at {}".format(self.label, self.host)
 
         self.connection = boto.connect_s3(
             aws_access_key_id=self.accesskey,

@@ -11,6 +11,9 @@ LF = '\n'
 LFLF = '\n\n'
 SPACE = ' '
 
+SUPERSCRIPT = dict(zip([ord(char) for char in '0123456789'], '⁰¹²³⁴⁵⁶⁷⁸⁹'))
+FULLWIDTH = dict(zip([ord(char) for char in '0123456789'], '０１２３４５６７８９'))
+
 TIMESTAMP_FORMAT = '%Y%m%d%H%M%S'
 
 def timestamp4now(now=datetime.now()):
@@ -26,6 +29,11 @@ def slugify(value):
     value = re.sub(r'[^\w\s-]', '', value).strip().lower()
     value = re.sub(r'[-\s]+', '-', value)
   return value
+
+def superscript(string):
+    return string.translate(SUPERSCRIPT)
+def fullwidth(string):
+    return string.translate(FULLWIDTH)
 
 def formatkv(kv, title=None):
   out = list()

@@ -8,7 +8,6 @@ from __future__ import print_function
 __version__ = "1.0.0"
 
 import time
-import subprocess
 import functools
 
 import humanfriendly
@@ -18,7 +17,9 @@ from backup.archive import Archive
 from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
 from backup.target.s3 import S3, S3Error
+from backup.calendar import Calendar
 from backup.utils import LF, LFLF, formatkv
+from backup.utils.mail import sendMail, Attachment
 
 
 """
@@ -90,11 +91,9 @@ class Backup(Reporter, object):
         fs.addToArchive(archive)
         return fs
 
-    def sendReport(self, reporters):
+    def sendReport(self, reporters, attachments=None):
         """ Sends a report with the results of the archive creation.
         """
-        from email.mime.text import MIMEText
-        from email.header import Header
 
         reports = []
         for reporter in reporters:
@@ -108,20 +107,15 @@ class Backup(Reporter, object):
             reports.append(LF.join(out))
         report = LFLF.join(reports)
 
-        self.message(report)
-
-        subject = "[BACKUP] Archive for {}".format(self.source.description)
-
-        mail = MIMEText(report.encode('utf-8'), 'plain', 'utf-8')
-        mail['Subject'] = Header(subject, 'utf-8')
-        mail['To'] = self.mailto
-        mail['From'] = self.mailfrom
-
-        process = subprocess.Popen(
-            ["/usr/sbin/sendmail", "-oi", "-t"],
-            stdin=subprocess.PIPE,
+        sendMail(
+            self.mailto,
+            self.mailfrom,
+            "[BACKUP] Archive for {}".format(self.source.description),
+            report,
+            attachments
         )
-        process.communicate(mail.as_bytes())
+
+        self.message(report)
 
     @ReporterInspect('dry')
     @ReporterInspect('database')
@@ -219,14 +213,28 @@ class Backup(Reporter, object):
 
             if archive:
                 reporters.append(archive)
-            if target:
+            for target in targets:
                 reporters.append(target)
 
             if self.mailto:
                 self.message("Sending report to {} for {}".format(
                     self.mailto, self.source.description
                 ))
-                self.sendReport(reporters)
+
+                attachments = []
+
+                # create celendar attachments
+                for target in targets:
+                    calendar = Calendar(target.listArchives())
+                    attachments.append(
+                        Attachment(
+                            "{}-{}-calendar.html".format(self.source.slug, target.label),
+                            "text/html",
+                            calendar.format()
+                        )
+                    )
+
+                self.sendReport(reporters, attachments)
 
             return "OK"
 
