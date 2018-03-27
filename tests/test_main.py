@@ -27,7 +27,7 @@ def testWithNoArguments(patchedBackup, patchedWP, *args):
     result = main(["path_for_test_with_no_arguments"])
     patchedWP.assert_called_once_with('path_for_test_with_no_arguments', dbhost=None, dbname=None, dbpass=None, dbport=None, dbprefix=None, dbuser=None)
     # calls to backup
-    patchedBackup.assert_called_with(wp, None, None, quiet=False)
+    patchedBackup.assert_called_with(wp, [], None, quiet=False)
     bup.execute.assert_called_once_with(targets=[], database=False, filesystem=False, thinning=None, attic=None, dry=False)
 
 @patch('sitebackup.os.path.isdir', return_value=True)
@@ -43,25 +43,25 @@ def testWithArguments(patchedBackup, patchedWP, *args):
     # configuration should be taken from arguments
     patchedWP.assert_called_once_with('path_for_test_with_db_arguments', dbhost='localhost', dbname='wpdb', dbpass='123456', dbport=None, dbprefix='wp', dbuser='michael')
     # calls to backup
-    patchedBackup.assert_called_with(wp, None, None, quiet=False)
+    patchedBackup.assert_called_with(wp, [], None, quiet=False)
     bup.execute.assert_called_once_with(targets=[], database=False, filesystem=False, thinning=None, attic=None, dry=False)
 
     # test 2: configure mail reporting
     result = main(["-q", "--mail-to-admin", "--mail-from=admin@localhost", "."])
     # calls to backup
-    patchedBackup.assert_called_with(wp, "michael@localhost", "admin@localhost", quiet=True)
+    patchedBackup.assert_called_with(wp, ["michael@localhost"], "admin@localhost", quiet=True)
     bup.execute.assert_called_with(targets=[], database=False, filesystem=False, thinning=None, attic=None, dry=False)
 
     # test 3: switch on database processing and configure attic with no parameter
     result = main(["--database", "--attic", "--", "."])
     # calls to backup
-    patchedBackup.assert_called_with(wp, None, None, quiet=False)
+    patchedBackup.assert_called_with(wp, [], None, quiet=False)
     bup.execute.assert_called_with(targets=[], database=True, filesystem=False, thinning=None, attic=".", dry=False)
 
     # test 4: switch on filesystem processing and configure attic with parameter
     result = main(["--filesystem", "--attic=path_to_attic", "."])
     # calls to backup
-    patchedBackup.assert_called_with(wp, None, None, quiet=False)
+    patchedBackup.assert_called_with(wp, [], None, quiet=False)
     bup.execute.assert_called_with(targets=[], database=False, filesystem=True, thinning=None, attic="path_to_attic", dry=False)
 
 @patch('sitebackup.os.path.isdir', return_value=True)
