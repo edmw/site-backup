@@ -1,31 +1,32 @@
 # coding: utf-8
 
 """
-Transfer a backup archive to a cloud service using the S3 API.
+    Transfer a backup archive to a cloud service using the S3 API.
+
+    ########    ###    ########   ######   ######## ########             ######   #######
+       ##      ## ##   ##     ## ##    ##  ##          ##     ##        ##    ## ##     ##
+       ##     ##   ##  ##     ## ##        ##          ##     ##        ##              ##
+       ##    ##     ## ########  ##   #### ######      ##                ######   #######
+       ##    ######### ##   ##   ##    ##  ##          ##     ##              ##        ##
+       ##    ##     ## ##    ##  ##    ##  ##          ##     ##        ##    ## ##     ##
+       ##    ##     ## ##     ##  ######   ########    ##                ######   #######
 """
 
-########    ###    ########   ######   ######## ########             ######   #######
-   ##      ## ##   ##     ## ##    ##  ##          ##     ##        ##    ## ##     ##
-   ##     ##   ##  ##     ## ##        ##          ##     ##        ##              ##
-   ##    ##     ## ########  ##   #### ######      ##                ######   #######
-   ##    ######### ##   ##   ##    ##  ##          ##     ##              ##        ##
-   ##    ##     ## ##    ##  ##    ##  ##          ##     ##        ##    ## ##     ##
-   ##    ##     ## ##     ##  ######   ########    ##                ######   #######
-
-import sys, os, os.path
-
-from backup.archive import Archive
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
-from backup.utils import formatkv, formatsize
-
+import sys
 import time
-import collections
+
+from collections import namedtuple
 
 import boto
 import boto.s3.connection
 import socket
 
 import humanfriendly
+
+from backup.archive import Archive
+from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
+from backup.utils import formatkv
+
 
 class S3Error(Exception):
     """ Base Exception for errors while using a cloud service. """
@@ -36,9 +37,10 @@ class S3Error(Exception):
         self.message = message
 
     def __str__(self):
-        return "S3Error(%s)" % repr(self.message)
+        return "S3Error({!r})".format(self.message)
 
-class S3Result(collections.namedtuple('Result', ['size', 'duration'])):
+
+class S3Result(namedtuple('Result', ['size', 'duration'])):
     """ Class for results of s3 operations with proper formatting. """
 
     __slots__ = ()
@@ -49,13 +51,15 @@ class S3Result(collections.namedtuple('Result', ['size', 'duration'])):
             humanfriendly.format_timespan(self.duration)
         )
 
-class S3ThinningResult(collections.namedtuple('ThinningResult', ['archivesRetained', 'archivesDeleted'])):
+
+class S3ThinningResult(namedtuple('ThinningResult', ['archivesRetained', 'archivesDeleted'])):
     """ Class for results of s3 thinning operations with proper formatting. """
 
     __slots__ = ()
 
     def __str__(self):
-        return "Result(retained=%d, deleted=%d)" % (self.archivesRetained, self.archivesDeleted)
+        return "Result(retained={}, deleted={})".format(self.archivesRetained, self.archivesDeleted)
+
 
 class S3(Reporter, object):
     """ Class using a cloud service with the S3 API to transfer an archive.
@@ -123,7 +127,7 @@ class S3(Reporter, object):
                 sys.stdout.write("|")
                 sys.stdout.write("\n")
                 seconds = self.boto_progress_duration()
-                sys.stdout.write("%d seconds" % seconds)
+                sys.stdout.write("{} seconds".format(seconds))
                 sys.stdout.write("\n")
             sys.stdout.flush()
 
@@ -209,4 +213,3 @@ class S3(Reporter, object):
             raise S3Error(self, repr(e))
         except socket.gaierror as e:
             raise S3Error(self, repr(e))
-

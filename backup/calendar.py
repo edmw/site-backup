@@ -1,3 +1,15 @@
+# coding: utf-8$
+
+"""
+     ######     ###    ##       ######## ##    ## ########     ###    ########
+    ##    ##   ## ##   ##       ##       ###   ## ##     ##   ## ##   ##     ##
+    ##        ##   ##  ##       ##       ####  ## ##     ##  ##   ##  ##     ##
+    ##       ##     ## ##       ######   ## ## ## ##     ## ##     ## ########
+    ##       ######### ##       ##       ##  #### ##     ## ######### ##   ##
+    ##    ## ##     ## ##       ##       ##   ### ##     ## ##     ## ##    ##
+     ######  ##     ## ######## ######## ##    ## ########  ##     ## ##     ##
+"""
+
 import calendar
 
 from operator import attrgetter
@@ -6,6 +18,7 @@ from collections import Counter
 from datetime import date
 
 from backup.utils import LF
+
 
 class Calendar(calendar.HTMLCalendar):
 
@@ -124,7 +137,7 @@ class Calendar(calendar.HTMLCalendar):
         a(content)
         a('</body>')
         a('</html>')
-        return ''.join(h)#.encode("utf-8")#, "xmlcharrefreplace")
+        return ''.join(h)
 
     def format(self):
         first_year = self.first_archive.ctime.year if self.first_archive else self.today.year
@@ -138,4 +151,3 @@ class Calendar(calendar.HTMLCalendar):
                 a(self.formatyear(year))
             year = year + 1
         return self.formatpage(''.join(h))
-

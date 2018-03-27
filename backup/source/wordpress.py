@@ -1,14 +1,16 @@
 # coding: utf-8
 
-##      ##  #######  ########  ########  ########  ########  ########  ######   ######
-##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##    ## ##    ##
-##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##       ##
-##  ##  ## ##     ## ########  ##     ## ########  ########  ######    ######   ######
-##  ##  ## ##     ## ##   ##   ##     ## ##        ##   ##   ##             ##       ##
-##  ##  ## ##     ## ##    ##  ##     ## ##        ##    ##  ##       ##    ## ##    ##
- ###  ###   #######  ##     ## ########  ##        ##     ## ########  ######   ######
+"""
+    ##      ##  #######  ########  ########  ########  ########  ########  ######   ######
+    ##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##    ## ##    ##
+    ##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##       ##
+    ##  ##  ## ##     ## ########  ##     ## ########  ########  ######    ######   ######
+    ##  ##  ## ##     ## ##   ##   ##     ## ##        ##   ##   ##             ##       ##
+    ##  ##  ## ##     ## ##    ##  ##     ## ##        ##    ##  ##       ##    ## ##    ##
+     ###  ###   #######  ##     ## ########  ##        ##     ## ########  ######   ######
+"""
 
-import sys, os, os.path
+import os
 import re
 
 from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
@@ -16,19 +18,24 @@ from backup.utils import slugify, formatkv
 
 import pymysql as mysql
 
+
 class WPError(Exception):
     def __init__(self, wp, message):
         super(WPError, self).__init__()
         self.wp = wp
         self.message = message
+
     def __str__(self):
-        return "WPError(%s)" % repr(self.message)
+        return "WPError({!r})".format(self.message)
+
 
 class WPNotFoundError(WPError):
     pass
 
+
 class WPDatabaseError(WPError):
     pass
+
 
 class WP(Reporter, object):
     def __init__(self, path, **kwargs):
@@ -53,8 +60,8 @@ class WP(Reporter, object):
 
         # check preconditions
         if not self.checkConfig():
-            raise WPNotFoundError(self,
-                "no wordpress instance found at '%s'" % self.fspath
+            raise WPNotFoundError(
+                self, "no wordpress instance found at '{}'".format(self.fspath)
             )
 
         self.parseConfiguration()
@@ -75,7 +82,7 @@ class WP(Reporter, object):
 
         self.queryDatabase()
 
-        self.description = "Wordpress Blog '%s'" % self.title
+        self.description = "Wordpress Blog '{}'".format(self.title)
         self.slug = slugify(self.title)
 
     def checkConfig(self):
@@ -153,7 +160,6 @@ class WP(Reporter, object):
             self.dbhost = host
             self.dbport = int(port) if port else self.dbport
 
-
     @ReporterCheck
     def queryDatabase(self):
         connection = None
@@ -169,17 +175,17 @@ class WP(Reporter, object):
             )
             cursor = connection.cursor()
             cursor.execute(
-                "SELECT option_value FROM %soptions"
-                " WHERE option_name = 'blogname'" % self.dbprefix
+                "SELECT option_value FROM {}options"
+                " WHERE option_name = 'blogname'".format(self.dbprefix)
             )
             self.title = cursor.fetchone()[0]
             cursor.execute(
-                "SELECT option_value FROM %soptions"
-                " WHERE option_name = 'admin_email'" % self.dbprefix
+                "SELECT option_value FROM {}options"
+                " WHERE option_name = 'admin_email'".format(self.dbprefix)
             )
             self.email = cursor.fetchone()[0]
 
-        except MySQLdb.Error as e:
+        except mysql.Error as e:
             raise WPDatabaseError(self, repr(e))
 
         finally:

@@ -154,4 +154,3 @@ class Archive(Reporter, object):
         if os.path.isfile(tarname):
             os.remove(tarname)
         return tarname
-

@@ -1,6 +1,7 @@
 # coding: utf-8
 
-import pytest, mock, logging
+import pytest  # noqa: 401
+import mock  # noqa: 401
 
 from backup.thinning import ThinningStrategy, LatestStrategy, ThinOutStrategy
 from backup.utils import timestamp2date
@@ -8,6 +9,7 @@ from backup.utils import timestamp2date
 from datetime import datetime, timedelta
 from collections import namedtuple
 from random import randint
+
 
 def everyday(lastday):
     date = lastday
@@ -23,6 +25,7 @@ def everyday(lastday):
         dates.add(date + jitter)
         date = date - delta
     return dates
+
 
 def somedays():
     Day = namedtuple('Day', ['timestamp'])
@@ -71,6 +74,7 @@ def somedays():
 """.strip().split('\n')
     return list(map(Day, map(timestamp2date, timestamps)))
 
+
 def testArgumentFactory():
     # invalid parameters
     with pytest.raises(ValueError):
@@ -83,6 +87,7 @@ def testArgumentFactory():
     s = ThinningStrategy.fromArgument("L17")
     assert type(s) is LatestStrategy
 
+
 def assertThinningOn(dates, indates, outdates):
     if len(dates):
         assert next(reversed(sorted(dates))) in indates
@@ -90,8 +95,9 @@ def assertThinningOn(dates, indates, outdates):
     assert indates.isdisjoint(outdates)
     assert indates.union(outdates) == set(dates)
 
+
 def testThinningLatest():
-    lastday = datetime(2222,2,2,22,22,22)
+    lastday = datetime(2222, 2, 2, 22, 22, 22)
     dates = everyday(lastday)
     (indates, outdates) = LatestStrategy(17).executeOn(dates)
     assertThinningOn(dates, indates, outdates)
@@ -104,11 +110,10 @@ def testThinningLatest():
     assert len(outdates) == 0
     assert all(outdate < min(indates) for outdate in outdates)
 
-def testThinOut(caplog):
-    #caplog.set_level(logging.INFO)
 
-    lastday = datetime(2222,2,2,22,22,22)
-    fixdate = datetime(2222,1,31)
+def testThinOut(caplog):
+    lastday = datetime(2222, 2, 2, 22, 22, 22)
+    fixdate = datetime(2222, 1, 31)
 
     # test empty
     (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn([], fix=fixdate)
@@ -132,21 +137,25 @@ def testThinOut(caplog):
     for x in range(0, 100):
         fixdate = fixdate + timedelta(weeks=1)
         (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate)
-    assert len(indates) == 10 # there must always be 9 yearly dates + latest
+    assert len(indates) == 10  # there must always be 9 yearly dates + latest
     # fast forward again (add a date first)
     indates.add(fixdate)
     for x in range(0, 100):
         fixdate = fixdate + timedelta(weeks=1)
         (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate)
-    assert len(indates) == 10 # there must always be 10 yearly dates now
+    assert len(indates) == 10  # there must always be 10 yearly dates now
 
     fixdate = datetime(2018, 3, 21)
     dates = somedays()
-    (indates, outdates) = ThinOutStrategy(7, 7, 7).executeOn(dates, fix=fixdate, attr='timestamp')
+    (indates, outdates) = ThinOutStrategy(7, 7, 7).executeOn(
+        dates, fix=fixdate, attr='timestamp'
+    )
     assertThinningOn(dates, indates, outdates)
     assert len(indates) == 21
     # thin out again - must be the same result
-    (indates2, outdates2) = ThinOutStrategy(7, 7, 7).executeOn(indates, fix=fixdate, attr='timestamp')
+    (indates2, outdates2) = ThinOutStrategy(7, 7, 7).executeOn(
+        indates, fix=fixdate, attr='timestamp'
+    )
     assertThinningOn(indates, indates2, outdates2)
     assert len(indates2) == len(indates)
     assert len(indates2) == 21
@@ -154,16 +163,22 @@ def testThinOut(caplog):
     # fast forward (days)
     for x in range(0, 100):
         fixdate = fixdate + timedelta(days=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate, attr='timestamp')
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+            indates, fix=fixdate, attr='timestamp'
+        )
     assert len(indates) == 6
     # fast forward (weeks)
     for x in range(0, 100):
         fixdate = fixdate + timedelta(weeks=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate, attr='timestamp')
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+            indates, fix=fixdate, attr='timestamp'
+        )
     assert len(indates) == 6
     # what happens if we go back in time
     fixdate = datetime(2018, 3, 21)
     for x in range(0, 100):
         fixdate = fixdate - timedelta(days=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate, attr='timestamp')
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+            indates, fix=fixdate, attr='timestamp'
+        )
     assert len(indates) == 6

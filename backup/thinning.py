@@ -1,5 +1,15 @@
 # coding: utf-8
 
+"""
+    ######## ##     ## #### ##    ## ##    ## #### ##    ##  ######
+       ##    ##     ##  ##  ###   ## ###   ##  ##  ###   ## ##    ##
+       ##    ##     ##  ##  ####  ## ####  ##  ##  ####  ## ##
+       ##    #########  ##  ## ## ## ## ## ##  ##  ## ## ## ##   ####
+       ##    ##     ##  ##  ##  #### ##  ####  ##  ##  #### ##    ##
+       ##    ##     ##  ##  ##   ### ##   ###  ##  ##   ### ##    ##
+       ##    ##     ## #### ##    ## ##    ## #### ##    ##  ######
+"""
+
 import re
 import logging
 
@@ -10,8 +20,7 @@ from dateutil.relativedelta import relativedelta
 from operator import add, attrgetter
 from collections import Iterable
 
-"""
-"""
+
 class ThinningStrategy(object):
 
     @classmethod
@@ -48,9 +57,10 @@ class ThinningStrategy(object):
         dates = reversed(dates)
         return self.__execute__(list(dates), attr=attr, fix=fix)
 
-""" Keep the x most recent dates. Discard all others.
-"""
+
 class LatestStrategy(ThinningStrategy):
+    """ Keep the x most recent dates. Discard all others.
+    """
 
     def __init__(self, number):
         assert number > 0
@@ -67,13 +77,14 @@ class LatestStrategy(ThinningStrategy):
         in_dates = dates[:self.number]
         out_dates = dates[self.number:]
 
-        for in_date in in_dates: logging.info("IN:  {}".format(repr(in_date)))
-        for out_date in out_dates: logging.info("OUT: {}".format(repr(in_date)))
+        for in_date in in_dates:
+            logging.info("IN:  {}".format(repr(in_date)))
+        for out_date in out_dates:
+            logging.info("OUT: {}".format(repr(in_date)))
 
         return (set(in_dates), set(out_dates))
 
-"""
-"""
+
 class ThinOutStrategy(ThinningStrategy):
 
     def __init__(self, days, weeks, months):
@@ -127,10 +138,11 @@ class ThinOutStrategy(ThinningStrategy):
             out_dates = []
             dates_in_span = [d for d in dates if date_is_in_span(d, start, end)]
             if len(dates_in_span):
-                in_date = dates_in_span[-1] # keep oldest
+                in_date = dates_in_span[-1]
                 in_dates.append(in_date)
                 out_dates = dates_in_span[:-1]
-            for in_date in in_dates: logging.info("IN:  {}".format(repr(in_date)))
+            for in_date in in_dates:
+                logging.info("IN:  {}".format(repr(in_date)))
             logging.info("OUT: #{}".format(len(out_dates)))
             return in_dates, out_dates
 
@@ -153,7 +165,7 @@ class ThinOutStrategy(ThinningStrategy):
 
             day_dates = [d for d in dates if date_is_same_day(d, day)]
             if len(day_dates):
-                in_date = day_dates[-1] # keep oldest
+                in_date = day_dates[-1]
                 in_dates.append(in_date)
                 logging.info("IN:  {}".format(repr(in_date)))
                 other_dates = day_dates[:-1]
@@ -167,10 +179,11 @@ class ThinOutStrategy(ThinningStrategy):
             week_start = week_end - timedelta(weeks=1)
             logging.info("WEEK {} - {}".format(week_start.date(), week_end.date()))
 
-            in_dates, out_dates = map(add, [in_dates, out_dates], split_dates_in_span(week_start, week_end))
+            in_dates, out_dates = map(
+                add, [in_dates, out_dates], split_dates_in_span(week_start, week_end)
+            )
 
         # this is tricky: adjust to months (keep all dates inbetween)
-        #weeks_end = tail(in_dates) or 
         weeks_end = (fix - timedelta(days=self.days, weeks=self.weeks))
         fix_month = weeks_end.replace(day=1)
         logging.info("ADJUSTMENT {} - {}".format(fix_month, weeks_end))
@@ -186,7 +199,9 @@ class ThinOutStrategy(ThinningStrategy):
             month_start = month_end - relativedelta(months=1)
             logging.info("MONTH {} - {}".format(month_start.date(), month_end.date()))
 
-            in_dates, out_dates = map(add, [in_dates, out_dates], split_dates_in_span(month_start, month_end))
+            in_dates, out_dates = map(
+                add, [in_dates, out_dates], split_dates_in_span(month_start, month_end)
+            )
 
         # finally keep one date per year forever
         year_end = fix_month - relativedelta(months=self.months)
@@ -195,7 +210,9 @@ class ThinOutStrategy(ThinningStrategy):
         while last_date and year_end >= last_date:
             logging.info("YEAR {} - {}".format(year_start.date(), year_end.date()))
 
-            in_dates, out_dates = map(add, [in_dates, out_dates], split_dates_in_span(year_start, year_end))
+            in_dates, out_dates = map(
+                add, [in_dates, out_dates], split_dates_in_span(year_start, year_end)
+            )
 
             year_end = year_end - relativedelta(years=1)
             year_start = year_end - relativedelta(years=1)
@@ -204,4 +221,3 @@ class ThinOutStrategy(ThinningStrategy):
         out_dates = set(out_dates)
 
         return (set(in_dates), set(out_dates))
-

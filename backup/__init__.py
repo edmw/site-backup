@@ -226,13 +226,15 @@ class Backup(Reporter, object):
                 # create celendar attachments
                 for target in targets:
                     calendar = Calendar(target.listArchives())
-                    attachments.append(
-                        Attachment(
-                            "{}-{}-calendar.html".format(self.source.slug, target.label),
-                            "text/html",
-                            calendar.format()
+                    doc = calendar.format()
+                    if doc:
+                        attachments.append(
+                            Attachment(
+                                "{}-{}-calendar.html".format(self.source.slug, target.label),
+                                "text/html",
+                                doc
+                            )
                         )
-                    )
 
                 self.sendReport(reporters, attachments)
 
