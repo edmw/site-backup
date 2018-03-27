@@ -105,7 +105,7 @@ class Backup(Reporter, object):
             if results:
                 out.append(results)
             reports.append(LF.join(out))
-        report = LFLF.join(reports)
+        report = LFLF.join(reports) + LFLF
 
         sendMail(
             self.mailto,
@@ -240,4 +240,3 @@ class Backup(Reporter, object):
 
         except (DBError, FSError, S3Error) as e:
             print(e)
-
