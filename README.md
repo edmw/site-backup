@@ -47,6 +47,7 @@ report options:
 
   --mail-from MAIL     sender address for report mails
   --mail-to-admin      send report to wordpress administrator
+  --mail-to MAIL       recipient address for report mails
 
 This script will try to load the wordpress configuration file at
 the given path and read the database configuration for the given
