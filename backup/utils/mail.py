@@ -77,14 +77,14 @@ class Mailer(object):
         str_template = "Mailer(" + LF + "{0}," + LF + "{1}" + LF + ")"
         return str_template.format(str_sender, str_recipients)
 
-    def recipients_as_string(self):
-        return ", ".join([r.mail for r in self.recipients])
-
     def setSender(self, sender):
         self.sender = sender
 
     def addRecipient(self, recipient):
         self.recipients.append(recipient)
+
+    def serviceable(self):
+        return self.sender is not None and len(self.recipients) > 0
 
     def send(self, subject, text, attachments):
         mail_from = self.sender.mail if self.sender else None
