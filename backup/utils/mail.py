@@ -10,6 +10,9 @@ from email.utils import COMMASPACE, formatdate
 
 from collections import namedtuple
 
+from backup.utils import LF, SPACER
+
+
 Attachment = namedtuple('Attachment', ['name', 'mimetype', 'data'])
 
 
@@ -40,3 +43,60 @@ def sendMail(send_to, send_from, subject, text, attachments):
         stdin=subprocess.PIPE,
     )
     process.communicate(mail.as_bytes())
+
+
+Sender = namedtuple('Sender', ['mail'])
+Recipient = namedtuple('Recipient', ['mail'])
+
+
+class MailerError(Exception):
+    def __init__(self, mailer, message):
+        super(MailerError, self).__init__()
+        self.mailer = mailer
+        self.message = message
+
+    def __str__(self):
+        return "MailerError({!r})".format(self.message)
+
+
+class Mailer(object):
+
+    def __init__(self):
+        self.sender = None
+        self.recipients = []
+
+    def __str__(self):
+        str_sender = self.sender.mail if self.sender else "None"
+        str_recipients = COMMASPACE.join(recipient.mail for recipient in self.recipients)
+        str_template = "Mailer to {1} from {0}"
+        return str_template.format(str_sender, str_recipients)
+
+    def __format_value__(self):
+        str_sender = SPACER + str(self.sender) if self.sender else SPACER + "None"
+        str_recipients = LF.join(SPACER + str(recipient) for recipient in self.recipients)
+        str_template = "Mailer(" + LF + "{0}," + LF + "{1}" + LF + ")"
+        return str_template.format(str_sender, str_recipients)
+
+    def recipients_as_string(self):
+        return ", ".join([r.mail for r in self.recipients])
+
+    def setSender(self, sender):
+        self.sender = sender
+
+    def addRecipient(self, recipient):
+        self.recipients.append(recipient)
+
+    def send(self, subject, text, attachments):
+        mail_from = self.sender.mail if self.sender else None
+        if mail_from is None:
+            raise MailerError(self, "No sender specified!")
+        mail_to = [r.mail for r in self.recipients] or None
+        if mail_to is None:
+            raise MailerError(self, "No recipient specified!")
+        sendMail(
+            mail_to,
+            mail_from,
+            subject,
+            text,
+            attachments
+        )

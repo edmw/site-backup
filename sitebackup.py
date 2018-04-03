@@ -17,6 +17,7 @@ from backup import Backup
 from backup.source.wordpress import WP, WPError
 from backup.target.s3 import S3
 from backup.thinning import ThinningStrategy
+from backup.utils.mail import Mailer, Sender, Recipient
 
 
 """
@@ -243,16 +244,16 @@ def main(args=None):
 
     # initialize options
 
-    mailto = []
+    mailer = Mailer()
     if arguments.mail_to_admin:
-        mailto.append(source.email)
+        mailer.addRecipient(Recipient(source.email))
     if arguments.mail_to:
-        mailto.append(arguments.mail_to)
-    mailfrom = arguments.mail_from
+        mailer.addRecipient(Recipient(arguments.mail_to))
+    mailer.setSender(Sender(arguments.mail_from))
 
     # initialize and execute backup
 
-    backup = Backup(source, mailto, mailfrom, quiet=arguments.quiet)
+    backup = Backup(source, mailer=mailer, quiet=arguments.quiet)
     backup.execute(
         targets=targets,
         database=arguments.database,

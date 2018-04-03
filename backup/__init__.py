@@ -19,7 +19,7 @@ from backup.filesystem import FS, FSError
 from backup.target.s3 import S3, S3Error
 from backup.calendar import Calendar
 from backup.utils import LF, LFLF, formatkv
-from backup.utils.mail import sendMail, Attachment
+from backup.utils.mail import Mailer, Attachment
 
 
 """
@@ -42,11 +42,10 @@ class Backup(Reporter, object):
 
     """
 
-    def __init__(self, source, mailto, mailfrom, quiet=False):
+    def __init__(self, source, mailer=None, quiet=False):
         super(Backup, self).__init__()
         self.source = source
-        self.mailto = mailto
-        self.mailfrom = mailfrom
+        self.mailer = mailer
         self.quiet = quiet
         self.stime = 0
         self.etime = 0
@@ -55,7 +54,7 @@ class Backup(Reporter, object):
         return formatkv(
             [
                 ("Execution Time", humanfriendly.format_timespan(self.etime - self.stime)),
-                ("Report(To)", self.mailto),
+                ("Report(To)", self.mailer),
             ],
             title="SITEBACKUP",
         )
@@ -91,7 +90,7 @@ class Backup(Reporter, object):
         fs.addToArchive(archive)
         return fs
 
-    def sendReport(self, reporters, attachments=None):
+    def sendReport(self, reporters, mailer, attachments=None):
         """ Sends a report with the results of the archive creation.
         """
 
@@ -107,9 +106,7 @@ class Backup(Reporter, object):
             reports.append(LF.join(out))
         report = LFLF.join(reports) + LFLF
 
-        sendMail(
-            self.mailto,
-            self.mailfrom,
+        mailer.send(
             "[BACKUP] Archive for {}".format(self.source.description),
             report,
             attachments
@@ -216,10 +213,8 @@ class Backup(Reporter, object):
             for target in targets:
                 reporters.append(target)
 
-            if self.mailto:
-                self.message("Sending report to {} for {}".format(
-                    self.mailto, self.source.description
-                ))
+            if self.mailer:
+                self.message("Sending report by {}".format(self.mailer))
 
                 attachments = []
 
@@ -236,7 +231,7 @@ class Backup(Reporter, object):
                             )
                         )
 
-                self.sendReport(reporters, attachments)
+                self.sendReport(reporters, self.mailer, attachments)
 
             return "OK"
 

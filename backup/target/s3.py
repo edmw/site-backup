@@ -149,6 +149,8 @@ class S3(Reporter, object):
 
         except boto.exception.S3ResponseError as e:
             raise S3Error(self, repr(e))
+        except boto.exception.BotoServerError as e:
+            raise S3Error(self, repr(e))
         except socket.gaierror as e:
             raise S3Error(self, repr(e))
 
@@ -182,6 +184,8 @@ class S3(Reporter, object):
 
         except boto.exception.S3ResponseError as e:
             raise S3Error(self, repr(e))
+        except boto.exception.BotoServerError as e:
+            raise S3Error(self, repr(e))
         except socket.gaierror as e:
             raise S3Error(self, repr(e))
 
@@ -210,6 +214,8 @@ class S3(Reporter, object):
                 return S3ThinningResult(len(toRetain), len(toDelete))
 
         except boto.exception.S3ResponseError as e:
+            raise S3Error(self, repr(e))
+        except boto.exception.BotoServerError as e:
             raise S3Error(self, repr(e))
         except socket.gaierror as e:
             raise S3Error(self, repr(e))

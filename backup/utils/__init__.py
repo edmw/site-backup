@@ -9,6 +9,7 @@ from datetime import datetime
 LF = '\n'
 LFLF = '\n\n'
 SPACE = ' '
+SPACER = '    '
 
 SUPERSCRIPT = dict(zip([ord(char) for char in '0123456789'], '⁰¹²³⁴⁵⁶⁷⁸⁹'))
 FULLWIDTH = dict(zip([ord(char) for char in '0123456789'], '０１２３４５６７８９'))
@@ -42,12 +43,31 @@ def fullwidth(string):
 
 
 def formatkv(kv, title=None):
-    out = list()
+    o = list()
+    a = o.append
+
     if title:
-        out.append(title)
-    for (k, v) in kv:
-        out.append("    {}: {}".format(k, v))
-    return "\n".join(out)
+        a(title)
+
+    for (key, value) in kv:
+        if value:
+            if hasattr(value, '__format_value__'):
+                text = value.__format_value__()
+            else:
+                text = str(value)
+            lines = text.splitlines() or None if text else None
+            if lines:
+                for index, line in enumerate(lines):
+                    if index == 0:
+                        a(SPACER + "{}: {}".format(key, line))
+                    else:
+                        a(2 * SPACER + "{}".format(line))
+            else:
+                a(SPACER + "{}: None".format(key))
+        else:
+            a(SPACER + "{}: None".format(key))
+
+    return "\n".join(o)
 
 
 def formatsize(size, binary=False, format='{:.1f}'):
