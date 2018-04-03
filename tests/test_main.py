@@ -1,10 +1,11 @@
 # coding: utf-8
 
 import pytest  # noqa: 401
-from mock import patch
+from mock import mock, patch
 
 from sitebackup import main
 from backup.source.wordpress import WPError
+from backup.utils.mail import Sender, Recipient
 
 
 def testHelp():
@@ -20,9 +21,11 @@ def setupWP(mock):
 
 
 @patch('sitebackup.os.path.isdir', return_value=True)
+@patch('sitebackup.Mailer')
 @patch('sitebackup.WP')
 @patch('sitebackup.Backup')
-def testWithNoArguments(patchedBackup, patchedWP, *args):
+def testWithNoArguments(patchedBackup, patchedWP, patchedMailer, *args):
+    mailer = patchedMailer()
     wp = setupWP(patchedWP)
     bup = patchedBackup()
     main(["path_for_test_with_no_arguments"])
@@ -36,7 +39,7 @@ def testWithNoArguments(patchedBackup, patchedWP, *args):
         dbuser=None
     )
     # calls to backup
-    patchedBackup.assert_called_with(wp, [], None, quiet=False)
+    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False)
     bup.execute.assert_called_once_with(
         targets=[],
         database=False,
@@ -48,9 +51,11 @@ def testWithNoArguments(patchedBackup, patchedWP, *args):
 
 
 @patch('sitebackup.os.path.isdir', return_value=True)
+@patch('sitebackup.Mailer')
 @patch('sitebackup.WP')
 @patch('sitebackup.Backup')
-def testWithArguments(patchedBackup, patchedWP, *args):
+def testWithArguments(patchedBackup, patchedWP, patchedMailer, *args):
+    mailer = patchedMailer()
     wp = setupWP(patchedWP)
     wp.email = "michael@localhost"
     bup = patchedBackup()
@@ -75,8 +80,8 @@ def testWithArguments(patchedBackup, patchedWP, *args):
         dbuser='michael'
     )
     # calls to backup
-    patchedBackup.assert_called_with(wp, [], None, quiet=False)
-    bup.execute.assert_called_once_with(
+    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False)
+    bup.execute.assert_called_with(
         targets=[],
         database=False,
         filesystem=False,
@@ -90,12 +95,19 @@ def testWithArguments(patchedBackup, patchedWP, *args):
         "-q",
         "--mail-to-admin",
         "--mail-from=admin@localhost",
+        "--mail-to=example@localhost",
         "."
     ])
-    # calls to backup
-    patchedBackup.assert_called_with(
-        wp, ["michael@localhost"], "admin@localhost", quiet=True
+    # configuration should be taken from arguments
+    mailer.setSender.assert_called_with(
+        Sender("admin@localhost")
     )
+    assert[
+        mock.call(Recipient("michael@localhost")),
+        mock.call(Recipient("example@localhost"))
+    ] == mailer.addRecipient.mock_calls
+    # calls to backup
+    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=True)
     bup.execute.assert_called_with(
         targets=[],
         database=False,
@@ -113,8 +125,7 @@ def testWithArguments(patchedBackup, patchedWP, *args):
         "."
     ])
     # calls to backup
-    patchedBackup.assert_called_with(
-        wp, [], None, quiet=False
+    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False
     )
     bup.execute.assert_called_with(
         targets=[],
@@ -132,8 +143,7 @@ def testWithArguments(patchedBackup, patchedWP, *args):
         "."
     ])
     # calls to backup
-    patchedBackup.assert_called_with(
-        wp, [], None, quiet=False
+    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False
     )
     bup.execute.assert_called_with(
         targets=[],
