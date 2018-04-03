@@ -213,7 +213,7 @@ class Backup(Reporter, object):
             for target in targets:
                 reporters.append(target)
 
-            if self.mailer:
+            if self.mailer and self.mailer.serviceable():
                 self.message("Sending report by {}".format(self.mailer))
 
                 attachments = []
