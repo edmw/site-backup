@@ -140,7 +140,7 @@ class S3(Reporter, object):
                 try:
                     archive = Archive.fromfilename(key.name, check_label=label)
                 except ValueError as e:
-                    raise S3Error(self, str(e))
+                    raise S3Error(self, str(e)) from e
 
                 if archive:
                     archives.append(archive)
@@ -148,11 +148,11 @@ class S3(Reporter, object):
             return archives
 
         except boto.exception.S3ResponseError as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
         except boto.exception.BotoServerError as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
         except socket.gaierror as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
 
     @ReporterCheckResult
     def transferArchive(self, archive, dry=False):
@@ -183,11 +183,11 @@ class S3(Reporter, object):
                 return S3Result(0, 0)
 
         except boto.exception.S3ResponseError as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
         except boto.exception.BotoServerError as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
         except socket.gaierror as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
 
     @ReporterCheckResult
     def performThinning(self, label, thinArchives, dry=False):
@@ -214,8 +214,8 @@ class S3(Reporter, object):
                 return S3ThinningResult(len(toRetain), len(toDelete))
 
         except boto.exception.S3ResponseError as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
         except boto.exception.BotoServerError as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
         except socket.gaierror as e:
-            raise S3Error(self, repr(e))
+            raise S3Error(self, repr(e)) from e
