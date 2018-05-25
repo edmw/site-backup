@@ -88,5 +88,7 @@ def formatsize(size, binary=False, format='{:.1f}'):
     for i, suffix in enumerate(suffixes):
         unit = base ** (i + 2)
         if bytes < unit:
-            return (format + ' {}').format((base * bytes / unit), suffix)
-    return (format + ' {}').format((base * bytes / unit), suffix)
+            s = format.format(base * bytes / unit)
+            return s + ' {}'.format(suffix)
+    s = format.format(base * bytes / unit)
+    return s + ' {}'.format(suffix)
