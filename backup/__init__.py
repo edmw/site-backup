@@ -19,7 +19,7 @@ from backup.filesystem import FS, FSError
 from backup.target.s3 import S3, S3Error
 from backup.calendar import Calendar
 from backup.utils import LF, LFLF, formatkv
-from backup.utils.mail import sendMail, Attachment
+from backup.utils.mail import sendMail, Priority, Attachment
 
 
 """
@@ -50,11 +50,13 @@ class Backup(Reporter, object):
         self.quiet = quiet
         self.stime = 0
         self.etime = 0
+        self.error = None
 
     def __str__(self):
         return formatkv(
             [
                 ("Execution Time", humanfriendly.format_timespan(self.etime - self.stime)),
+                ("Execution Error", str(self.error)),
                 ("Report(To)", self.mailto),
             ],
             title="SITEBACKUP",
@@ -107,12 +109,19 @@ class Backup(Reporter, object):
             reports.append(LF.join(out))
         report = LFLF.join(reports) + LFLF
 
+        subject = "[BACKUP] Archive for {}".format(self.source.description)
+        if self.error is None:
+            subject = '👍' + subject
+        else:
+            subject = '❗' + subject
+
         sendMail(
             self.mailto,
             self.mailfrom,
-            "[BACKUP] Archive for {}".format(self.source.description),
+            subject,
             report,
-            attachments
+            attachments,
+            priority=Priority.NORMAL if not self.error else Priority.HIGH
         )
 
         self.message(report)
@@ -241,4 +250,6 @@ class Backup(Reporter, object):
             return "OK"
 
         except (DBError, FSError, S3Error) as e:
-            print(e)
+            self.error = e
+            self.etime = time.monotonic()
+            self.sendReport(reporters)
