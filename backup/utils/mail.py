@@ -99,7 +99,7 @@ class Mailer(object):
     def serviceable(self):
         return self.sender is not None and len(self.recipients) > 0
 
-    def send(self, subject, text, attachments):
+    def send(self, subject, text, attachments, priority=Priority.NORMAL):
         mail_from = self.sender.mail if self.sender else None
         if mail_from is None:
             raise MailerError(self, "No sender specified!")
@@ -111,5 +111,6 @@ class Mailer(object):
             mail_from,
             subject,
             text,
-            attachments
+            attachments,
+            priority
         )
