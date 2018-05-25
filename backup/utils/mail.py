@@ -8,12 +8,24 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import COMMASPACE, formatdate
 
+
+from enum import IntEnum
+
+class Priority(IntEnum):
+    HIGHEST = 1
+    HIGH = 2
+    NORMAL = 3
+    LOW = 4
+    LOWEST = 5
+
+
 from collections import namedtuple
 
-Attachment = namedtuple('Attachment', ['name', 'mimetype', 'data'])
+class Attachment(namedtuple('Attachment', ['name', 'mimetype', 'data'])):
+    __slots__ = ()
 
 
-def sendMail(send_to, send_from, subject, text, attachments):
+def sendMail(send_to, send_from, subject, text, attachments, priority=Priority.NORMAL):
     if attachments:
         mail = MIMEMultipart()
         part = MIMEText(text.encode('utf-8'), 'plain', 'utf-8')
@@ -34,6 +46,8 @@ def sendMail(send_to, send_from, subject, text, attachments):
     mail['To'] = COMMASPACE.join(send_to)
     mail['From'] = send_from
     mail['Date'] = formatdate(localtime=True)
+    if priority is not Priority.NORMAL:
+        mail['X-Priority'] = str(int(priority))
 
     process = subprocess.Popen(
         ["/usr/sbin/sendmail", "-oi", "-t"],
