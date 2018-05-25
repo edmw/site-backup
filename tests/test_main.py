@@ -4,7 +4,6 @@ import pytest  # noqa: 401
 from mock import mock, patch
 
 from sitebackup import main
-from backup.source.wordpress import WPError
 from backup.utils.mail import Sender, Recipient
 
 
