@@ -39,9 +39,6 @@ class FS(Reporter, object):
         if not os.path.exists(self.path):
             raise FSNotFoundError(self, "path '{}' not found".format(self.path))
 
-        if not os.path.isfile(os.path.join(self.path, "wp-config.php")):
-            raise FSError(self, "path '{}' seems not to be a wordpress instance".format(self.path))
-
     def __str__(self):
         return formatkv(
             [
