@@ -14,7 +14,7 @@ import functools
 import logging
 
 from backup import Backup
-from backup.source.wordpress import WP, WPError
+from backup.source import SourceFactory, SourceErrors
 from backup.target.s3 import S3
 from backup.thinning import ThinningStrategy
 from backup.utils.mail import Mailer, Sender, Recipient
@@ -215,8 +215,7 @@ def main(args=None):
     # initialize source
 
     try:
-        source = WP(
-            arguments.path,
+        source = SourceFactory(arguments.path).create(
             dbname=arguments.db,
             dbhost=arguments.dbhost,
             dbport=arguments.dbport,
@@ -224,9 +223,11 @@ def main(args=None):
             dbpass=arguments.dbpass,
             dbprefix=arguments.dbprefix
         )
-    except WPError as exception:
-        print(exception)
+    except SourceErrors as exception:
+        logging.error("Site-Backup: {}".format(exception))
         sys.exit(1)
+    else:
+        logging.info("Site-Backup: Source is %s" % (source))
 
     # initialize targets
 
@@ -242,14 +243,18 @@ def main(args=None):
         )
         targets.append(s3target)
 
+    for target in targets:
+        logging.info("Site-Backup: Target is %s" % (target))
+
     # initialize options
 
-    mailer = Mailer()
-    if arguments.mail_to_admin:
-        mailer.addRecipient(Recipient(source.email))
-    if arguments.mail_to:
-        mailer.addRecipient(Recipient(arguments.mail_to))
-    mailer.setSender(Sender(arguments.mail_from))
+    mailer = Mailer() if arguments.mail_from else None
+    if mailer:
+        if arguments.mail_to_admin:
+            mailer.addRecipient(Recipient(source.email))
+        if arguments.mail_to:
+            mailer.addRecipient(Recipient(arguments.mail_to))
+        mailer.setSender(Sender(arguments.mail_from))
 
     # initialize and execute backup
 
@@ -263,6 +268,10 @@ def main(args=None):
         dry=arguments.dry
     )
 
+
+    if backup.error:
+        logging.error("Site-Backup: {}".format(backup.error))
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

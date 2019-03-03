@@ -9,6 +9,7 @@ __version__ = "1.0.0"
 
 import time
 import functools
+import logging
 
 import humanfriendly
 
@@ -247,4 +248,5 @@ class Backup(Reporter, object):
         except (DBError, FSError, S3Error) as e:
             self.error = e
             self.etime = time.monotonic()
-            self.sendReport(reporters, self.mailer)
+            if self.mailer and self.mailer.serviceable():
+                self.sendReport(reporters, self.mailer)

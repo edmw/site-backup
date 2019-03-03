@@ -18,8 +18,10 @@ from backup.utils import slugify, formatkv
 
 import pymysql as mysql
 
+from .error import SourceError
 
-class WPError(Exception):
+
+class WPError(SourceError):
     def __init__(self, wp, message):
         super(WPError, self).__init__()
         self.wp = wp
