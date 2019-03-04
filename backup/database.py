@@ -65,7 +65,11 @@ class DB(Reporter, object):
         )
 
     def tables(self):
-        # get list of tables for prefix
+        # get list of tables
+        if self.prefix:
+            execute = "show tables like \"{}%%\"".format(self.prefix)
+        else:
+            execute = "show tables"
         p = subprocess.Popen(
             [
                 "mysql", self.db,
@@ -74,7 +78,7 @@ class DB(Reporter, object):
                 "--password={}".format(self.password),
                 "--batch",
                 "--skip-column-names",
-                "--execute=show tables like \"{}%%\"".format(self.prefix),
+                "--execute={}".format(execute),
             ],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -94,6 +98,8 @@ class DB(Reporter, object):
     @ReporterCheckResult
     def dumpToArchive(self, archive):
         tables = self.tables()
+        if not tables:
+            raise DBError(self, "no tables to dump")
 
         p = subprocess.Popen(
             [
