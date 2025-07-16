@@ -2,13 +2,13 @@ Usage
 -----
 
 ```Text
-This script creates a backup of a Wordpress Blog instance.
+This script creates a backup of Wordpress or Humhub instances.
 
-It generates a compressed tar archive containing a dump
-of the wordpress database and a copy of the wordpress filesystem.
+It generates a compressed tar archive containing a dump of the wordpress or
+humhub database and a copy of the wordpress or humhub filesystem.
 
 positional arguments:
-  path                 path to wordpress instance
+  path                 path to wordpress or humhub instance
 
 optional arguments:
   -h, --help           show this help message and exit
@@ -60,9 +60,59 @@ by specifing the correspondent command line options.
 Requirements
 ------------
 
-  * Python 3
+  * Python 3.8+
   * PyMySQL (MIT) - https://github.com/PyMySQL/PyMySQL
   * boto (MIT) - https://github.com/boto/boto
   * dateutil (BSD) - https://github.com/dateutil/dateutil
   * humanfriendly (MIT) - https://github.com/xolox/python-humanfriendly
   * coloredlogs (MIT) - https://github.com/xolox/python-coloredlogs
+
+Development Setup
+-----------------
+
+This project uses [uv](https://astral.sh/uv) for dependency management. 
+
+### Installation
+
+1. Install uv (if not already installed):
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. Clone and setup the project:
+   ```bash
+   git clone <repository-url>
+   cd site-backup
+   uv sync
+   ```
+
+### Running the application
+
+```bash
+# Run with uv
+uv run python sitebackup.py [options] path
+
+# Or activate the virtual environment
+source .venv/bin/activate
+python sitebackup.py [options] path
+```
+
+### Development commands
+
+```bash
+# Install development dependencies
+uv sync
+
+# Run tests
+uv run pytest
+
+# Run linting
+uv run flake8 .
+uv run pylint backup/
+
+# Add new dependencies
+uv add <package-name>
+
+# Add development dependencies  
+uv add --dev <package-name>
+```

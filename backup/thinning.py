@@ -1,24 +1,26 @@
 # coding: utf-8
 
 """
-    ######## ##     ## #### ##    ## ##    ## #### ##    ##  ######
-       ##    ##     ##  ##  ###   ## ###   ##  ##  ###   ## ##    ##
-       ##    ##     ##  ##  ####  ## ####  ##  ##  ####  ## ##
-       ##    #########  ##  ## ## ## ## ## ##  ##  ## ## ## ##   ####
-       ##    ##     ##  ##  ##  #### ##  ####  ##  ##  #### ##    ##
-       ##    ##     ##  ##  ##   ### ##   ###  ##  ##   ### ##    ##
-       ##    ##     ## #### ##    ## ##    ## #### ##    ##  ######
+######## ##     ## #### ##    ## ##    ## #### ##    ##  ######
+   ##    ##     ##  ##  ###   ## ###   ##  ##  ###   ## ##    ##
+   ##    ##     ##  ##  ####  ## ####  ##  ##  ####  ## ##
+   ##    #########  ##  ## ## ## ## ## ##  ##  ## ## ## ##   ####
+   ##    ##     ##  ##  ##  #### ##  ####  ##  ##  #### ##    ##
+   ##    ##     ##  ##  ##   ### ##   ###  ##  ##   ### ##    ##
+   ##    ##     ## #### ##    ## ##    ## #### ##    ##  ######
 """
 
-import re
 import logging
+import re
+from datetime import datetime, timedelta
+from operator import add, attrgetter
 
-from datetime import datetime
-from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 
-from operator import add, attrgetter
-from collections import Iterable
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 
 class ThinningStrategy(object):
@@ -27,20 +29,25 @@ class ThinningStrategy(object):
     def fromArgument(cls, string):
         # strategy: latest
         # string contains number of latest backups to keep
-        number = re.match("L([1-9]\d*)|.*", string).group(1)
-        if number:
-            return LatestStrategy(int(number))
+        match = re.match(r"L([1-9]\d*)|.*", string)
+        if match:
+            number = match.group(1)
+            if number:
+                return LatestStrategy(int(number))
 
         # strategy: thin out by days, weeks and years
-        numbers = re.match("([1-9]\d*)D([1-9]\d*)W([1-9]\d*)M|.*", string).groups()
-        if numbers and all(numbers):
-            return ThinOutStrategy(*(map(int, numbers)))
+        match = re.match(r"([1-9]\d*)D([1-9]\d*)W([1-9]\d*)M|.*", string)
+        if match:
+            numbers = match.groups()
+            if numbers and all(numbers):
+                return ThinOutStrategy(*(map(int, numbers)))
 
         raise ValueError("not a valid strategy '{}'".format(string))
 
     """ Implementation of specific thinning strategy:
         'dates' are guranteed to be sorted from newest to oldest.
     """
+
     def __execute__(self, dates, attr=None, fix=None):
         raise NotImplementedError
 
@@ -52,6 +59,7 @@ class ThinningStrategy(object):
         The union of in and out dates is equal to the set given. The
         intersection is guaranteed to be the empty set.
     """
+
     def executeOn(self, dates, attr=None, fix=datetime.now()):
         dates = sorted(dates) if attr is None else sorted(dates, key=attrgetter(attr))
         dates = reversed(dates)
@@ -59,8 +67,7 @@ class ThinningStrategy(object):
 
 
 class LatestStrategy(ThinningStrategy):
-    """ Keep the x most recent dates. Discard all others.
-    """
+    """Keep the x most recent dates. Discard all others."""
 
     def __init__(self, number):
         assert number > 0
@@ -74,8 +81,8 @@ class LatestStrategy(ThinningStrategy):
 
         logging.info("THINNING BY LATEST {}".format(self.number))
 
-        in_dates = dates[:self.number]
-        out_dates = dates[self.number:]
+        in_dates = dates[: self.number]
+        out_dates = dates[self.number :]
 
         for in_date in in_dates:
             logging.info("IN:  {}".format(repr(in_date)))
@@ -96,9 +103,7 @@ class ThinOutStrategy(ThinningStrategy):
         self.months = months
 
     def __str__(self):
-        return "THIN OUT {}D{}W{}M".format(
-            self.days, self.weeks, self.months
-        )
+        return "THIN OUT {}D{}W{}M".format(self.days, self.weeks, self.months)
 
     def __execute__(self, dates, attr=None, fix=None):
         assert isinstance(dates, Iterable)
@@ -184,10 +189,12 @@ class ThinOutStrategy(ThinningStrategy):
             )
 
         # this is tricky: adjust to months (keep all dates inbetween)
-        weeks_end = (fix - timedelta(days=self.days, weeks=self.weeks))
+        weeks_end = fix - timedelta(days=self.days, weeks=self.weeks)
         fix_month = weeks_end.replace(day=1)
         logging.info("ADJUSTMENT {} - {}".format(fix_month, weeks_end))
-        adjustment_dates = [d for d in dates if date_is_in_span(d, fix_month, weeks_end)]
+        adjustment_dates = [
+            d for d in dates if date_is_in_span(d, fix_month, weeks_end)
+        ]
         if len(adjustment_dates):
             for in_date in adjustment_dates:
                 logging.info("IN:  {}".format(repr(in_date)))
