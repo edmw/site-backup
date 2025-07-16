@@ -14,17 +14,6 @@ dependencies = [
     "dsnparse",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-logging",
-    "mock",
-    "pylint",
-    "flake8",
-    "flake8-pep3101",
-    "flake8-string-format",
-]
-
 [project.scripts]
 sitebackup = "sitebackup:main"
 
@@ -45,4 +34,20 @@ dev-dependencies = [
     "flake8-pep3101",
     "flake8-string-format",
     "black>=25.1.0",
+    "requests",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests (may require external services)",
+    "unit: marks tests as unit tests",
+    "slow: marks tests as slow-running tests",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+# By default, skip integration and slow tests
+# Use: uv run pytest -m integration  to run integration tests
+# Use: uv run pytest -m "not integration and not slow"  to run only fast unit tests

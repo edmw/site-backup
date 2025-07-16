@@ -12,15 +12,13 @@ Transfer a backup archive to a cloud service using the S3 API.
    ##    ##     ## ##     ##  ######   ########    ##                ######   #######
 """
 
+import socket
 import sys
 import time
-
 from collections import namedtuple
 
 import boto
 import boto.s3.connection
-import socket
-
 import humanfriendly
 
 from backup.archive import Archive
@@ -77,10 +75,11 @@ class S3(Reporter, object):
 
     """
 
-    def __init__(self, host, accesskey, secretkey, bucket):
+    def __init__(self, host, accesskey, secretkey, bucket, port=None, is_secure=True):
         super(S3, self).__init__()
 
         self.host = host
+        self.port = port
         self.accesskey = accesskey
         self.secretkey = secretkey
         self.bucket = bucket
@@ -91,7 +90,9 @@ class S3(Reporter, object):
         self.connection = boto.connect_s3(
             aws_access_key_id=self.accesskey,
             aws_secret_access_key=self.secretkey,
-            host=self.host,
+            host=host,
+            port=port,
+            is_secure=is_secure,
             calling_format=boto.s3.connection.OrdinaryCallingFormat(),
         )
 
