@@ -1,17 +1,18 @@
 # coding: utf-8
 
 """
-    ########     ###    ########    ###    ########     ###     ######  ########
-    ##     ##   ## ##      ##      ## ##   ##     ##   ## ##   ##    ## ##
-    ##     ##  ##   ##     ##     ##   ##  ##     ##  ##   ##  ##       ##
-    ##     ## ##     ##    ##    ##     ## ########  ##     ##  ######  ######
-    ##     ## #########    ##    ######### ##     ## #########       ## ##
-    ##     ## ##     ##    ##    ##     ## ##     ## ##     ## ##    ## ##
-    ########  ##     ##    ##    ##     ## ########  ##     ##  ######  ########
+########     ###    ########    ###    ########     ###     ######  ########
+##     ##   ## ##      ##      ## ##   ##     ##   ## ##   ##    ## ##
+##     ##  ##   ##     ##     ##   ##  ##     ##  ##   ##  ##       ##
+##     ## ##     ##    ##    ##     ## ########  ##     ##  ######  ######
+##     ## #########    ##    ######### ##     ## #########       ## ##
+##     ## ##     ##    ##    ##     ## ##     ## ##     ## ##    ## ##
+########  ##     ##    ##    ##     ## ########  ##     ##  ######  ########
 """
 
 # 8 data types
 import collections
+
 # 17 concurrent execution
 import subprocess
 
@@ -34,15 +35,14 @@ class DBAccessDeniedError(DBError):
     pass
 
 
-class DBResult(collections.namedtuple('Result', ['size', 'numberOfTables'])):
-    """ Class for results of db operations with proper formatting. """
+class DBResult(collections.namedtuple("Result", ["size", "numberOfTables"])):
+    """Class for results of db operations with proper formatting."""
 
     __slots__ = ()
 
     def __str__(self):
         return "Result(size={}, numberOfTables={})".format(
-            humanfriendly.format_size(self.size),
-            self.numberOfTables
+            humanfriendly.format_size(self.size), self.numberOfTables
         )
 
 
@@ -61,18 +61,19 @@ class DB(Reporter, object):
             [
                 ("DB", self.db),
             ],
-            title="DATABASE"
+            title="DATABASE",
         )
 
     def tables(self):
         # get list of tables
         if self.prefix:
-            execute = "show tables like \"{}%%\"".format(self.prefix)
+            execute = 'show tables like "{}%%"'.format(self.prefix)
         else:
             execute = "show tables"
         p = subprocess.Popen(
             [
-                "mysql", self.db,
+                "mysql",
+                self.db,
                 "--host={}".format(self.host),
                 "--user={}".format(self.user),
                 "--password={}".format(self.password),
@@ -80,7 +81,9 @@ class DB(Reporter, object):
                 "--skip-column-names",
                 "--execute={}".format(execute),
             ],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
         )
 
         (stdoutdata, stderrdata) = p.communicate()
@@ -109,8 +112,10 @@ class DB(Reporter, object):
                 "--password={}".format(self.password),
                 "--opt",
                 self.db,
-            ] + tables,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ]
+            + tables,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
 
         (stdoutdata, stderrdata) = p.communicate()

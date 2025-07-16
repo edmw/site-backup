@@ -28,7 +28,7 @@ def everyday(lastday):
 
 
 def somedays():
-    Day = namedtuple('Day', ['timestamp'])
+    Day = namedtuple("Day", ["timestamp"])
     timestamps = """
 20140201213106
 20150208051039
@@ -71,7 +71,9 @@ def somedays():
 20180311040403
 20180312010603
 20180318064806
-""".strip().split('\n')
+""".strip().split(
+        "\n"
+    )
     return list(map(Day, map(timestamp2date, timestamps)))
 
 
@@ -120,7 +122,9 @@ def testThinOut(caplog):
     assertThinningOn([], indates, outdates)
     assert len(indates) == 0
     assert len(outdates) == 0
-    (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn([], fix=fixdate, attr='timestamp')
+    (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+        [], fix=fixdate, attr="timestamp"
+    )
     assertThinningOn([], indates, outdates)
     assert len(indates) == 0
     assert len(outdates) == 0
@@ -148,13 +152,13 @@ def testThinOut(caplog):
     fixdate = datetime(2018, 3, 21)
     dates = somedays()
     (indates, outdates) = ThinOutStrategy(7, 7, 7).executeOn(
-        dates, fix=fixdate, attr='timestamp'
+        dates, fix=fixdate, attr="timestamp"
     )
     assertThinningOn(dates, indates, outdates)
     assert len(indates) == 21
     # thin out again - must be the same result
     (indates2, outdates2) = ThinOutStrategy(7, 7, 7).executeOn(
-        indates, fix=fixdate, attr='timestamp'
+        indates, fix=fixdate, attr="timestamp"
     )
     assertThinningOn(indates, indates2, outdates2)
     assert len(indates2) == len(indates)
@@ -164,14 +168,14 @@ def testThinOut(caplog):
     for x in range(0, 100):
         fixdate = fixdate + timedelta(days=1)
         (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
-            indates, fix=fixdate, attr='timestamp'
+            indates, fix=fixdate, attr="timestamp"
         )
     assert len(indates) == 6
     # fast forward (weeks)
     for x in range(0, 100):
         fixdate = fixdate + timedelta(weeks=1)
         (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
-            indates, fix=fixdate, attr='timestamp'
+            indates, fix=fixdate, attr="timestamp"
         )
     assert len(indates) == 6
     # what happens if we go back in time
@@ -179,6 +183,6 @@ def testThinOut(caplog):
     for x in range(0, 100):
         fixdate = fixdate - timedelta(days=1)
         (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
-            indates, fix=fixdate, attr='timestamp'
+            indates, fix=fixdate, attr="timestamp"
         )
     assert len(indates) == 6

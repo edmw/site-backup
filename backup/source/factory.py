@@ -5,6 +5,7 @@ from backup.source.wordpress import WP, WPError
 
 from .error import SourceErrors
 
+
 class SourceFactory(object):
     def __init__(self, path):
         super(SourceFactory, self).__init__()
@@ -28,4 +29,3 @@ class SourceFactory(object):
             return source
 
         raise SourceErrors("Can't create source", errors)
-            

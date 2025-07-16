@@ -1,13 +1,13 @@
 # coding: utf-8
 
 """
-    ##      ##  #######  ########  ########  ########  ########  ########  ######   ######
-    ##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##    ## ##    ##
-    ##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##       ##
-    ##  ##  ## ##     ## ########  ##     ## ########  ########  ######    ######   ######
-    ##  ##  ## ##     ## ##   ##   ##     ## ##        ##   ##   ##             ##       ##
-    ##  ##  ## ##     ## ##    ##  ##     ## ##        ##    ##  ##       ##    ## ##    ##
-     ###  ###   #######  ##     ## ########  ##        ##     ## ########  ######   ######
+##      ##  #######  ########  ########  ########  ########  ########  ######   ######
+##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##    ## ##    ##
+##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##       ##
+##  ##  ## ##     ## ########  ##     ## ########  ########  ######    ######   ######
+##  ##  ## ##     ## ##   ##   ##     ## ##        ##   ##   ##             ##       ##
+##  ##  ## ##     ## ##    ##  ##     ## ##        ##    ##  ##       ##    ## ##    ##
+ ###  ###   #######  ##     ## ########  ##        ##     ## ########  ######   ######
 """
 
 import os
@@ -131,19 +131,19 @@ class WP(Reporter, object):
                 if m:
                     key = m.group(1)
                     value = m.group(2)
-                    if key == 'DB_NAME':
+                    if key == "DB_NAME":
                         self.dbname = value
                         continue
-                    if key == 'DB_HOST':
+                    if key == "DB_HOST":
                         self.dbhost = value
                         continue
-                    if key == 'DB_USER':
+                    if key == "DB_USER":
                         self.dbuser = value
                         continue
-                    if key == 'DB_PASSWORD':
+                    if key == "DB_PASSWORD":
                         self.dbpass = value
                         continue
-                    if key == 'DB_CHARSET':
+                    if key == "DB_CHARSET":
                         self.dbcharset = value
                         continue
 
@@ -156,7 +156,7 @@ class WP(Reporter, object):
         re_hostname = r"^(?P<host>[^:]+):?(?P<port>[0-9]*)$"
 
         m = re.search(re_hostname, self.dbhost)
-        if (m):
+        if m:
             host = m.group("host")
             port = m.group("port")
             self.dbhost = host
@@ -173,7 +173,7 @@ class WP(Reporter, object):
                 user=self.dbuser,
                 password=self.dbpass,
                 charset=self.dbcharset,
-                use_unicode=True
+                use_unicode=True,
             )
             cursor = connection.cursor()
             cursor.execute(

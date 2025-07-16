@@ -1,15 +1,15 @@
 # coding: utf-8
 
 """
-    Transfer a backup archive to a cloud service using the S3 API.
+Transfer a backup archive to a cloud service using the S3 API.
 
-    ########    ###    ########   ######   ######## ########             ######   #######
-       ##      ## ##   ##     ## ##    ##  ##          ##     ##        ##    ## ##     ##
-       ##     ##   ##  ##     ## ##        ##          ##     ##        ##              ##
-       ##    ##     ## ########  ##   #### ######      ##                ######   #######
-       ##    ######### ##   ##   ##    ##  ##          ##     ##              ##        ##
-       ##    ##     ## ##    ##  ##    ##  ##          ##     ##        ##    ## ##     ##
-       ##    ##     ## ##     ##  ######   ########    ##                ######   #######
+########    ###    ########   ######   ######## ########             ######   #######
+   ##      ## ##   ##     ## ##    ##  ##          ##     ##        ##    ## ##     ##
+   ##     ##   ##  ##     ## ##        ##          ##     ##        ##              ##
+   ##    ##     ## ########  ##   #### ######      ##                ######   #######
+   ##    ######### ##   ##   ##    ##  ##          ##     ##              ##        ##
+   ##    ##     ## ##    ##  ##    ##  ##          ##     ##        ##    ## ##     ##
+   ##    ##     ## ##     ##  ######   ########    ##                ######   #######
 """
 
 import sys
@@ -29,7 +29,7 @@ from backup.utils import formatkv
 
 
 class S3Error(Exception):
-    """ Base Exception for errors while using a cloud service. """
+    """Base Exception for errors while using a cloud service."""
 
     def __init__(self, s3, message):
         super(S3Error, self).__init__()
@@ -40,29 +40,33 @@ class S3Error(Exception):
         return "S3Error({!r})".format(self.message)
 
 
-class S3Result(namedtuple('Result', ['size', 'duration'])):
-    """ Class for results of s3 operations with proper formatting. """
+class S3Result(namedtuple("Result", ["size", "duration"])):
+    """Class for results of s3 operations with proper formatting."""
 
     __slots__ = ()
 
     def __str__(self):
         return "Result(size={}, duration={})".format(
             humanfriendly.format_size(self.size),
-            humanfriendly.format_timespan(self.duration)
+            humanfriendly.format_timespan(self.duration),
         )
 
 
-class S3ThinningResult(namedtuple('ThinningResult', ['archivesRetained', 'archivesDeleted'])):
-    """ Class for results of s3 thinning operations with proper formatting. """
+class S3ThinningResult(
+    namedtuple("ThinningResult", ["archivesRetained", "archivesDeleted"])
+):
+    """Class for results of s3 thinning operations with proper formatting."""
 
     __slots__ = ()
 
     def __str__(self):
-        return "Result(retained={}, deleted={})".format(self.archivesRetained, self.archivesDeleted)
+        return "Result(retained={}, deleted={})".format(
+            self.archivesRetained, self.archivesDeleted
+        )
 
 
 class S3(Reporter, object):
-    """ Class using a cloud service with the S3 API to transfer an archive.
+    """Class using a cloud service with the S3 API to transfer an archive.
 
     To use initialize with the configuration of a compatible cloud service
     and call transferArchive with an archive object.
@@ -97,7 +101,7 @@ class S3(Reporter, object):
                 ("S3(Host)", self.host),
                 ("S3(Bucket)", self.bucket),
             ],
-            title="S3"
+            title="S3",
         )
 
     def boto_progress_start(self):
@@ -108,7 +112,7 @@ class S3(Reporter, object):
         return int(self.progress_etime - self.progress_stime)
 
     def boto_progress(self, complete, total):
-        """ Progress handler for boto library.
+        """Progress handler for boto library.
 
         Prints a progress indicator to the console.
 
@@ -156,7 +160,7 @@ class S3(Reporter, object):
 
     @ReporterCheckResult
     def transferArchive(self, archive, dry=False):
-        """ Transfers the given archive to the configured cloud service.
+        """Transfers the given archive to the configured cloud service.
 
         If the configured bucket does not exist it will be created.
 
@@ -174,8 +178,7 @@ class S3(Reporter, object):
             if not dry:
                 key = bucket.new_key(archive.filename)
                 key.set_contents_from_filename(
-                    archive.filename,
-                    cb=self.boto_progress, num_cb=10
+                    archive.filename, cb=self.boto_progress, num_cb=10
                 )
                 return S3Result(key.size, self.boto_progress_duration())
 
@@ -191,7 +194,7 @@ class S3(Reporter, object):
 
     @ReporterCheckResult
     def performThinning(self, label, thinArchives, dry=False):
-        """ Deletes obsolete archives from the configured cloud service.
+        """Deletes obsolete archives from the configured cloud service.
 
         Collects all archives in the configured bucket and decides which
         archives to keep according the given strategy. Then deletes the

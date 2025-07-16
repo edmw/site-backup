@@ -1,21 +1,23 @@
 # coding: utf-8
 
 """
-       ###    ########   ######  ##     ## #### ##     ## ########
-      ## ##   ##     ## ##    ## ##     ##  ##  ##     ## ##
-     ##   ##  ##     ## ##       ##     ##  ##  ##     ## ##
-    ##     ## ########  ##       #########  ##  ##     ## ######
-    ######### ##   ##   ##       ##     ##  ##   ##   ##  ##
-    ##     ## ##    ##  ##    ## ##     ##  ##    ## ##   ##
-    ##     ## ##     ##  ######  ##     ## ####    ###    ########
+   ###    ########   ######  ##     ## #### ##     ## ########
+  ## ##   ##     ## ##    ## ##     ##  ##  ##     ## ##
+ ##   ##  ##     ## ##       ##     ##  ##  ##     ## ##
+##     ## ########  ##       #########  ##  ##     ## ######
+######### ##   ##   ##       ##     ##  ##   ##   ##  ##
+##     ## ##    ##  ##    ## ##     ##  ##    ## ##   ##
+##     ## ##     ##  ######  ##     ## ####    ###    ########
 """
 
 import os
 import io
 import time
 import logging
+
 # 8 data types
 import collections
+
 # 13 data compression and archiving
 import tarfile
 
@@ -25,8 +27,8 @@ from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 from backup.utils import formatkv, timestamp4now, timestamp2date
 
 
-class ArchiveResult(collections.namedtuple('Result', ['size'])):
-    """ Class for results of archive operations with proper formatting. """
+class ArchiveResult(collections.namedtuple("Result", ["size"])):
+    """Class for results of archive operations with proper formatting."""
 
     __slots__ = ()
 
@@ -52,7 +54,7 @@ class ArchiveFile(object):
 
     def writeline(self, data):
         self.handle.write(data if self.binmode else data.encode())
-        self.handle.write(b'\n')
+        self.handle.write(b"\n")
 
     def size(self):
         self.handle.seek(0, os.SEEK_END)
@@ -70,7 +72,7 @@ class Archive(Reporter, object):
         self.timestamp = timestamp or timestamp4now()
 
         self.name = "{}-{}".format(label, self.timestamp)
-        self.path = '.'
+        self.path = "."
 
         self.ctime = timestamp2date(self.timestamp)
 
@@ -89,7 +91,9 @@ class Archive(Reporter, object):
         label, timestamp = m.groups()
 
         if check_label and label != check_label:
-            raise ValueError("filename '{}' not matching label '{}'".format(filename, check_label))
+            raise ValueError(
+                "filename '{}' not matching label '{}'".format(filename, check_label)
+            )
 
         return cls(label, timestamp)
 
@@ -106,15 +110,18 @@ class Archive(Reporter, object):
 
     def __enter__(self):
         self.tar = tarfile.open(
-            self.tarname(), 'w:gz',
-            debug=1 if logging.getLogger().getEffectiveLevel() == logging.DEBUG else 0
+            self.tarname(),
+            "w:gz",
+            debug=1 if logging.getLogger().getEffectiveLevel() == logging.DEBUG else 0,
         )
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.tar.close()
 
-        self.storeResult("createArchive", ArchiveResult(os.path.getsize(self.tarname())))
+        self.storeResult(
+            "createArchive", ArchiveResult(os.path.getsize(self.tarname()))
+        )
 
     def createArchiveFile(self, name, binmode=False):
         return ArchiveFile(name, binmode=binmode)

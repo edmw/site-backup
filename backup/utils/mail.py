@@ -13,6 +13,7 @@ from backup.utils import LF, SPACER
 
 from enum import IntEnum
 
+
 class Priority(IntEnum):
     HIGHEST = 1
     HIGH = 2
@@ -23,33 +24,36 @@ class Priority(IntEnum):
 
 from collections import namedtuple
 
-class Attachment(namedtuple('Attachment', ['name', 'mimetype', 'data'])):
+
+class Attachment(namedtuple("Attachment", ["name", "mimetype", "data"])):
     __slots__ = ()
 
 
 def sendMail(send_to, send_from, subject, text, attachments, priority=Priority.NORMAL):
     if attachments:
         mail = MIMEMultipart()
-        part = MIMEText(text.encode('utf-8'), 'plain', 'utf-8')
+        part = MIMEText(text.encode("utf-8"), "plain", "utf-8")
         mail.attach(part)
         for attachment in attachments:
-            if attachment.mimetype == 'text/html':
-                part = MIMEText(attachment.data.encode('utf-8'), 'html', 'utf-8')
-            elif attachment.mimetype == 'application/pdf':
-                part = MIMEApplication(attachment.data, 'pdf', Name=attachment.name)
+            if attachment.mimetype == "text/html":
+                part = MIMEText(attachment.data.encode("utf-8"), "html", "utf-8")
+            elif attachment.mimetype == "application/pdf":
+                part = MIMEApplication(attachment.data, "pdf", Name=attachment.name)
             else:
                 part = MIMEApplication(attachment.data, Name=attachment.name)
-            part['Content-Disposition'] = 'attachment; filename="{}"'.format(attachment.name)
+            part["Content-Disposition"] = 'attachment; filename="{}"'.format(
+                attachment.name
+            )
             mail.attach(part)
     else:
-        mail = MIMEText(text.encode('utf-8'), 'plain', 'utf-8')
+        mail = MIMEText(text.encode("utf-8"), "plain", "utf-8")
 
-    mail['Subject'] = Header(subject, 'utf-8')
-    mail['To'] = COMMASPACE.join(send_to)
-    mail['From'] = send_from
-    mail['Date'] = formatdate(localtime=True)
+    mail["Subject"] = Header(subject, "utf-8")
+    mail["To"] = COMMASPACE.join(send_to)
+    mail["From"] = send_from
+    mail["Date"] = formatdate(localtime=True)
     if priority is not Priority.NORMAL:
-        mail['X-Priority'] = str(int(priority))
+        mail["X-Priority"] = str(int(priority))
 
     process = subprocess.Popen(
         ["/usr/sbin/sendmail", "-oi", "-t"],
@@ -58,8 +62,8 @@ def sendMail(send_to, send_from, subject, text, attachments, priority=Priority.N
     process.communicate(mail.as_bytes())
 
 
-Sender = namedtuple('Sender', ['mail'])
-Recipient = namedtuple('Recipient', ['mail'])
+Sender = namedtuple("Sender", ["mail"])
+Recipient = namedtuple("Recipient", ["mail"])
 
 
 class MailerError(Exception):
@@ -80,13 +84,17 @@ class Mailer(object):
 
     def __str__(self):
         str_sender = self.sender.mail if self.sender else "None"
-        str_recipients = COMMASPACE.join(recipient.mail for recipient in self.recipients)
+        str_recipients = COMMASPACE.join(
+            recipient.mail for recipient in self.recipients
+        )
         str_template = "Mailer to {1} from {0}"
         return str_template.format(str_sender, str_recipients)
 
     def __format_value__(self):
         str_sender = SPACER + str(self.sender) if self.sender else SPACER + "None"
-        str_recipients = LF.join(SPACER + str(recipient) for recipient in self.recipients)
+        str_recipients = LF.join(
+            SPACER + str(recipient) for recipient in self.recipients
+        )
         str_template = "Mailer(" + LF + "{0}," + LF + "{1}" + LF + ")"
         return str_template.format(str_sender, str_recipients)
 
@@ -106,11 +114,4 @@ class Mailer(object):
         mail_to = [r.mail for r in self.recipients] or None
         if mail_to is None:
             raise MailerError(self, "No recipient specified!")
-        sendMail(
-            mail_to,
-            mail_from,
-            subject,
-            text,
-            attachments,
-            priority
-        )
+        sendMail(mail_to, mail_from, subject, text, attachments, priority)

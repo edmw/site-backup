@@ -1,13 +1,13 @@
 # coding: utf-8$
 
 """
-     ######     ###    ##       ######## ##    ## ########     ###    ########
-    ##    ##   ## ##   ##       ##       ###   ## ##     ##   ## ##   ##     ##
-    ##        ##   ##  ##       ##       ####  ## ##     ##  ##   ##  ##     ##
-    ##       ##     ## ##       ######   ## ## ## ##     ## ##     ## ########
-    ##       ######### ##       ##       ##  #### ##     ## ######### ##   ##
-    ##    ## ##     ## ##       ##       ##   ### ##     ## ##     ## ##    ##
-     ######  ##     ## ######## ######## ##    ## ########  ##     ## ##     ##
+ ######     ###    ##       ######## ##    ## ########     ###    ########
+##    ##   ## ##   ##       ##       ###   ## ##     ##   ## ##   ##     ##
+##        ##   ##  ##       ##       ####  ## ##     ##  ##   ##  ##     ##
+##       ##     ## ##       ######   ## ## ## ##     ## ##     ## ########
+##       ######### ##       ##       ##  #### ##     ## ######### ##   ##
+##    ## ##     ## ##       ##       ##   ### ##     ## ##     ## ##    ##
+ ######  ##     ## ######## ######## ##    ## ########  ##     ## ##     ##
 """
 
 import calendar
@@ -126,22 +126,26 @@ class Calendar(calendar.HTMLCalendar):
     def formatpage(self, content):
         h = []
         a = h.append
-        a('<!DOCTYPE HTML>')
-        a('<html>')
-        a('<head>')
+        a("<!DOCTYPE HTML>")
+        a("<html>")
+        a("<head>")
         a('<meta charset="utf-8">')
-        a('<title>Calendar</title>')
-        a('<style type="text/css">' + self.CSS + '</style>')
-        a('</head>')
-        a('<body>')
+        a("<title>Calendar</title>")
+        a('<style type="text/css">' + self.CSS + "</style>")
+        a("</head>")
+        a("<body>")
         a(content)
-        a('</body>')
-        a('</html>')
-        return ''.join(h)
+        a("</body>")
+        a("</html>")
+        return "".join(h)
 
     def format(self):
-        first_year = self.first_archive.ctime.year if self.first_archive else self.today.year
-        last_year = self.last_archive.ctime.year if self.last_archive else self.today.year
+        first_year = (
+            self.first_archive.ctime.year if self.first_archive else self.today.year
+        )
+        last_year = (
+            self.last_archive.ctime.year if self.last_archive else self.today.year
+        )
         h = []
         a = h.append
         year = first_year
@@ -150,4 +154,4 @@ class Calendar(calendar.HTMLCalendar):
             if len(dates_in):
                 a(self.formatyear(year))
             year = year + 1
-        return self.formatpage(''.join(h))
+        return self.formatpage("".join(h))

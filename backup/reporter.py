@@ -1,23 +1,23 @@
 # coding: utf-8
 
 """
-    Mixin and Decorators to collect and report
-    success and failure of function calls.
+Mixin and Decorators to collect and report
+success and failure of function calls.
 
-    To use add the mixin to a class
-    and decorate the functions to be observed:
+To use add the mixin to a class
+and decorate the functions to be observed:
 
-    class IDoSomething(Reporter, object):
+class IDoSomething(Reporter, object):
 
-        @ReporterCheck
-        def doSomething(self):
-            ...
+    @ReporterCheck
+    def doSomething(self):
+        ...
 
-        @ReporterCheckResult
-        def iWillReturnAResult(self):
-            ...
+    @ReporterCheckResult
+    def iWillReturnAResult(self):
+        ...
 
-    Then call object.reportResults() any time to generate a report.
+Then call object.reportResults() any time to generate a report.
 """
 
 import re
@@ -32,19 +32,19 @@ re_camel = re.compile(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))")
 
 
 class Reporter(object):
-    """ Mixin to store and report success and failure of function calls.
-    """
+    """Mixin to store and report success and failure of function calls."""
+
     def __init__(self):
         self.parameters = OrderedDict()
         self.results = OrderedDict()
 
     def storeParameter(self, fname, name, value):
-        """ Store parameter and value for the given function.
+        """Store parameter and value for the given function.
 
-            For consecutive calls with the same function name
-            parameters will be stored in a list.
+        For consecutive calls with the same function name
+        parameters will be stored in a list.
         """
-        fname = re_camel.sub(r" \1", fname.strip('_')).upper()
+        fname = re_camel.sub(r" \1", fname.strip("_")).upper()
         if fname in self.parameters:
             if type(self.parameters[fname]) is list:
                 self.parameters[fname].append((name, value))
@@ -54,12 +54,12 @@ class Reporter(object):
             self.parameters[fname] = (name, value)
 
     def storeResult(self, fname, result):
-        """ Store result for the given function.
+        """Store result for the given function.
 
-            For consecutive calls with the same function name
-            results will be stored in a list.
+        For consecutive calls with the same function name
+        results will be stored in a list.
         """
-        fname = re_camel.sub(r" \1", fname.strip('_')).upper()
+        fname = re_camel.sub(r" \1", fname.strip("_")).upper()
         if fname in self.results:
             if type(self.results[fname]) is list:
                 self.results[fname].append(result)
@@ -69,8 +69,7 @@ class Reporter(object):
             self.results[fname] = result
 
     def reportParameters(self):
-        """ Report parameters as fomatted string of key and value pairs.
-        """
+        """Report parameters as fomatted string of key and value pairs."""
         kv = []
         for fname, parameters in self.parameters.items():
             if type(parameters) is list:
@@ -84,30 +83,33 @@ class Reporter(object):
         return formatkv(kv)
 
     def reportResults(self):
-        """ Report results as fomatted string of key and value pairs.
-        """
+        """Report results as fomatted string of key and value pairs."""
         kv = self.results.items()
         return formatkv(kv)
 
 
 def ReporterInspect(name):
-    """ This decorator for a function will store a specified
-        argument value for the given argument name.
+    """This decorator for a function will store a specified
+    argument value for the given argument name.
     """
+
     def wrap(function):
         @wraps(function)
         def checkedFunction(self, *args, **kwargs):
             if name in kwargs:
                 self.storeParameter(function.__name__, name, kwargs[name])
             return function(self, *args, **kwargs)
+
         return checkedFunction
+
     return wrap
 
 
 def ReporterCheck(function):
-    """ This decorator for a function will store a success result
-        if no exception is thrown while executing the function.
+    """This decorator for a function will store a success result
+    if no exception is thrown while executing the function.
     """
+
     @wraps(function)
     def checkedFunction(self, *args, **kwargs):
         try:
@@ -116,13 +118,15 @@ def ReporterCheck(function):
         except BaseException:
             self.storeResult(function.__name__, False)
             raise
+
     return checkedFunction
 
 
 def ReporterCheckResult(function):
-    """ This decorator will store the result of the function call
-        if no exception is thrown while executing the function.
+    """This decorator will store the result of the function call
+    if no exception is thrown while executing the function.
     """
+
     @wraps(function)
     def checkedFunction(self, *args, **kwargs):
         try:
@@ -132,4 +136,5 @@ def ReporterCheckResult(function):
         except BaseException:
             self.storeResult(function.__name__, False)
             raise
+
     return checkedFunction

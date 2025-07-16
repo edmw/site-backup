@@ -35,7 +35,7 @@ from backup.utils.mail import Mailer, Priority, Attachment
 
 
 class Backup(Reporter, object):
-    """ Class to create a backup from a database and a filesystem.
+    """Class to create a backup from a database and a filesystem.
 
     To use initialize with a source and call execute with the desired
     targets. See backup.source for available sources and backup.target for
@@ -55,7 +55,10 @@ class Backup(Reporter, object):
     def __str__(self):
         return formatkv(
             [
-                ("Execution Time", humanfriendly.format_timespan(self.etime - self.stime)),
+                (
+                    "Execution Time",
+                    humanfriendly.format_timespan(self.etime - self.stime),
+                ),
                 ("Execution Error", str(self.error)),
                 ("Report(To)", self.mailer),
             ],
@@ -63,13 +66,12 @@ class Backup(Reporter, object):
         )
 
     def message(self, text):
-        """ Prints a message if not told to be quiet. """
+        """Prints a message if not told to be quiet."""
         if not self.quiet:
             print(text)
 
     def backupDatabase(self, archive):
-        """ Creates a database backup and stores it into the archive.
-        """
+        """Creates a database backup and stores it into the archive."""
         self.message("Processing database of {}".format(self.source.description))
 
         db = DB(
@@ -77,25 +79,21 @@ class Backup(Reporter, object):
             self.source.dbhost,
             self.source.dbuser,
             self.source.dbpass,
-            self.source.dbprefix
+            self.source.dbprefix,
         )
         db.dumpToArchive(archive)
         return db
 
     def backupFilesystem(self, archive):
-        """ Creates filesystem backup and stores it into the archive.
-        """
+        """Creates filesystem backup and stores it into the archive."""
         self.message("Processing filesystem of {}".format(self.source.description))
 
-        fs = FS(
-            self.source.fspath
-        )
+        fs = FS(self.source.fspath)
         fs.addToArchive(archive)
         return fs
 
     def sendReport(self, reporters, mailer, attachments=None):
-        """ Sends a report with the results of the archive creation.
-        """
+        """Sends a report with the results of the archive creation."""
 
         reports = []
         for reporter in reporters:
@@ -111,49 +109,52 @@ class Backup(Reporter, object):
 
         subject = "[BACKUP] Archive for {}".format(self.source.description)
         if self.error is None:
-            subject = '👍' + subject
+            subject = "👍" + subject
         else:
-            subject = '❗' + subject
+            subject = "❗" + subject
 
         mailer.send(
             subject,
             report,
             attachments,
-            priority=Priority.NORMAL if not self.error else Priority.HIGH
+            priority=Priority.NORMAL if not self.error else Priority.HIGH,
         )
 
         self.message(report)
 
-    @ReporterInspect('dry')
-    @ReporterInspect('database')
-    @ReporterInspect('filesystem')
-    @ReporterInspect('thinning')
+    @ReporterInspect("dry")
+    @ReporterInspect("database")
+    @ReporterInspect("filesystem")
+    @ReporterInspect("thinning")
     def execute(
-        self, targets=None, database=False, filesystem=False, thinning=None, attic=None, dry=False
+        self,
+        targets=None,
+        database=False,
+        filesystem=False,
+        thinning=None,
+        attic=None,
+        dry=False,
     ):
+        """Perfoms the creation of a backup.
 
-        """ Perfoms the creation of a backup.
+        The flags database and filesystem specify which data should be
+        included in the backup. Setting both flags to False will result
+        in an empty backup.
 
-            The flags database and filesystem specify which data should be
-            included in the backup. Setting both flags to False will result
-            in an empty backup.
+        The backup will be transferred to each of the given targets.
 
-            The backup will be transferred to each of the given targets.
+        Each given target will be thinned out according to the given
+        thinning strategy.
 
-            Each given target will be thinned out according to the given
-            thinning strategy.
-
-            If attic is given the backup file will be renamed to its value.
-            Otherwise the backup file will be deleted (after it was
-            transferred to the given targets, of course).
+        If attic is given the backup file will be renamed to its value.
+        Otherwise the backup file will be deleted (after it was
+        transferred to the given targets, of course).
 
         """
 
         def perform_thinning(strategy, archives):
-            """ Execute the given thinning strategy on the given archives. """
-            inarchives, outarchives = strategy.executeOn(
-                archives, attr='ctime'
-            )
+            """Execute the given thinning strategy on the given archives."""
+            inarchives, outarchives = strategy.executeOn(archives, attr="ctime")
 
             return (inarchives, outarchives)
 
@@ -171,7 +172,9 @@ class Backup(Reporter, object):
 
                 archive = Archive(self.source.slug)
                 with archive:
-                    self.message("Creating archive for {}".format(self.source.description))
+                    self.message(
+                        "Creating archive for {}".format(self.source.description)
+                    )
 
                     if database is True:
                         reporter = self.backupDatabase(archive)
@@ -196,13 +199,15 @@ class Backup(Reporter, object):
 
             if thinning:
                 for target in targets:
-                    self.message("Thinning archives on {} using strategy '{}'".format(
-                        target.description, thinning
-                    ))
+                    self.message(
+                        "Thinning archives on {} using strategy '{}'".format(
+                            target.description, thinning
+                        )
+                    )
                     target.performThinning(
                         self.source.slug,
                         functools.partial(perform_thinning, thinning),
-                        dry=dry
+                        dry=dry,
                     )
 
             # remove archive
@@ -235,9 +240,11 @@ class Backup(Reporter, object):
                     if doc:
                         attachments.append(
                             Attachment(
-                                "{}-{}-calendar.html".format(self.source.slug, target.label),
+                                "{}-{}-calendar.html".format(
+                                    self.source.slug, target.label
+                                ),
                                 "text/html",
-                                doc
+                                doc,
                             )
                         )
 

@@ -9,7 +9,11 @@ from backup.utils.mail import Sender, Recipient
 
 def testHelp():
     with pytest.raises(SystemExit) as exceptioninfo:
-        main(["-h", ])
+        main(
+            [
+                "-h",
+            ]
+        )
     assert exceptioninfo.value.code == 0
 
 
@@ -19,23 +23,23 @@ def setupWP(mock):
     return m
 
 
-@patch('sitebackup.os.path.isdir', return_value=True)
-@patch('sitebackup.Mailer')
-@patch('sitebackup.WP')
-@patch('sitebackup.Backup')
+@patch("sitebackup.os.path.isdir", return_value=True)
+@patch("sitebackup.Mailer")
+@patch("sitebackup.WP")
+@patch("sitebackup.Backup")
 def testWithNoArguments(patchedBackup, patchedWP, patchedMailer, *args):
     mailer = patchedMailer()
     wp = setupWP(patchedWP)
     bup = patchedBackup()
     main(["path_for_test_with_no_arguments"])
     patchedWP.assert_called_once_with(
-        'path_for_test_with_no_arguments',
+        "path_for_test_with_no_arguments",
         dbhost=None,
         dbname=None,
         dbpass=None,
         dbport=None,
         dbprefix=None,
-        dbuser=None
+        dbuser=None,
     )
     # calls to backup
     patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False)
@@ -45,14 +49,14 @@ def testWithNoArguments(patchedBackup, patchedWP, patchedMailer, *args):
         filesystem=False,
         thinning=None,
         attic=None,
-        dry=False
+        dry=False,
     )
 
 
-@patch('sitebackup.os.path.isdir', return_value=True)
-@patch('sitebackup.Mailer')
-@patch('sitebackup.WP')
-@patch('sitebackup.Backup')
+@patch("sitebackup.os.path.isdir", return_value=True)
+@patch("sitebackup.Mailer")
+@patch("sitebackup.WP")
+@patch("sitebackup.Backup")
 def testWithArguments(patchedBackup, patchedWP, patchedMailer, *args):
     mailer = patchedMailer()
     wp = setupWP(patchedWP)
@@ -60,23 +64,25 @@ def testWithArguments(patchedBackup, patchedWP, patchedMailer, *args):
     bup = patchedBackup()
 
     # test 1: overwrite database configuration
-    main([
-        "--db=wpdb",
-        "--dbhost=localhost",
-        "--dbuser=michael",
-        "--dbpass=123456",
-        "--dbprefix=wp",
-        "path_for_test_with_db_arguments"
-    ])
+    main(
+        [
+            "--db=wpdb",
+            "--dbhost=localhost",
+            "--dbuser=michael",
+            "--dbpass=123456",
+            "--dbprefix=wp",
+            "path_for_test_with_db_arguments",
+        ]
+    )
     # configuration should be taken from arguments
     patchedWP.assert_called_once_with(
-        'path_for_test_with_db_arguments',
-        dbhost='localhost',
-        dbname='wpdb',
-        dbpass='123456',
+        "path_for_test_with_db_arguments",
+        dbhost="localhost",
+        dbname="wpdb",
+        dbpass="123456",
         dbport=None,
-        dbprefix='wp',
-        dbuser='michael'
+        dbprefix="wp",
+        dbuser="michael",
     )
     # calls to backup
     patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False)
@@ -86,24 +92,24 @@ def testWithArguments(patchedBackup, patchedWP, patchedMailer, *args):
         filesystem=False,
         thinning=None,
         attic=None,
-        dry=False
+        dry=False,
     )
 
     # test 2: configure mail reporting
-    main([
-        "-q",
-        "--mail-to-admin",
-        "--mail-from=admin@localhost",
-        "--mail-to=example@localhost",
-        "."
-    ])
-    # configuration should be taken from arguments
-    mailer.setSender.assert_called_with(
-        Sender("admin@localhost")
+    main(
+        [
+            "-q",
+            "--mail-to-admin",
+            "--mail-from=admin@localhost",
+            "--mail-to=example@localhost",
+            ".",
+        ]
     )
-    assert[
+    # configuration should be taken from arguments
+    mailer.setSender.assert_called_with(Sender("admin@localhost"))
+    assert [
         mock.call(Recipient("michael@localhost")),
-        mock.call(Recipient("example@localhost"))
+        mock.call(Recipient("example@localhost")),
     ] == mailer.addRecipient.mock_calls
     # calls to backup
     patchedBackup.assert_called_with(wp, mailer=mailer, quiet=True)
@@ -113,51 +119,35 @@ def testWithArguments(patchedBackup, patchedWP, patchedMailer, *args):
         filesystem=False,
         thinning=None,
         attic=None,
-        dry=False
+        dry=False,
     )
 
     # test 3: switch on database processing and configure attic with no parameter
-    main([
-        "--database",
-        "--attic",
-        "--",
-        "."
-    ])
+    main(["--database", "--attic", "--", "."])
     # calls to backup
-    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False
-    )
+    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False)
     bup.execute.assert_called_with(
-        targets=[],
-        database=True,
-        filesystem=False,
-        thinning=None,
-        attic=".",
-        dry=False
+        targets=[], database=True, filesystem=False, thinning=None, attic=".", dry=False
     )
 
     # test 4: switch on filesystem processing and configure attic with parameter
-    main([
-        "--filesystem",
-        "--attic=path_to_attic",
-        "."
-    ])
+    main(["--filesystem", "--attic=path_to_attic", "."])
     # calls to backup
-    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False
-    )
+    patchedBackup.assert_called_with(wp, mailer=mailer, quiet=False)
     bup.execute.assert_called_with(
         targets=[],
         database=False,
         filesystem=True,
         thinning=None,
         attic="path_to_attic",
-        dry=False
+        dry=False,
     )
 
 
-@patch('sitebackup.os.path.isdir', return_value=True)
-@patch('sitebackup.WP')
-@patch('sitebackup.S3')
-@patch('sitebackup.Backup')
+@patch("sitebackup.os.path.isdir", return_value=True)
+@patch("sitebackup.WP")
+@patch("sitebackup.S3")
+@patch("sitebackup.Backup")
 def testWithS3Arguments(patchedBackup, patchedS3, patchedWP, *args):
     wp = setupWP(patchedWP)
     wp.slug = "wordpress-instance-to-backup"
@@ -165,32 +155,27 @@ def testWithS3Arguments(patchedBackup, patchedS3, patchedWP, *args):
     bup = patchedBackup()
 
     # test: configure s3 targets with bucket
-    main([
-        "--s3=s3.host.com",
-        "--s3accesskey=ABCDEF",
-        "--s3secretkey=000000",
-        "--s3bucket=bucket",
-        "."
-    ])
-    patchedS3.assert_called_with(
-        "s3.host.com", "ABCDEF", "000000", "bucket"
+    main(
+        [
+            "--s3=s3.host.com",
+            "--s3accesskey=ABCDEF",
+            "--s3secretkey=000000",
+            "--s3bucket=bucket",
+            ".",
+        ]
     )
+    patchedS3.assert_called_with("s3.host.com", "ABCDEF", "000000", "bucket")
     bup.execute.assert_called_once_with(
         targets=[s3],
         database=False,
         filesystem=False,
         thinning=None,
         attic=None,
-        dry=False
+        dry=False,
     )
 
     # test: configure s3 target with no bucket (bucket should be wp.slug)
-    main([
-        "--s3=s3.host.com",
-        "--s3accesskey=ABCDEF",
-        "--s3secretkey=000000",
-        "."
-    ])
+    main(["--s3=s3.host.com", "--s3accesskey=ABCDEF", "--s3secretkey=000000", "."])
     patchedS3.assert_called_with(
         "s3.host.com", "ABCDEF", "000000", "wordpress-instance-to-backup"
     )
@@ -200,5 +185,5 @@ def testWithS3Arguments(patchedBackup, patchedS3, patchedWP, *args):
         filesystem=False,
         thinning=None,
         attic=None,
-        dry=False
+        dry=False,
     )

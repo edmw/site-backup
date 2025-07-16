@@ -1,20 +1,20 @@
 # coding: utf-8
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"
 
 import re
 
 from datetime import datetime
 
-LF = '\n'
-LFLF = '\n\n'
-SPACE = ' '
-SPACER = '    '
+LF = "\n"
+LFLF = "\n\n"
+SPACE = " "
+SPACER = "    "
 
-SUPERSCRIPT = dict(zip([ord(char) for char in '0123456789'], '⁰¹²³⁴⁵⁶⁷⁸⁹'))
-FULLWIDTH = dict(zip([ord(char) for char in '0123456789'], '０１２３４５６７８９'))
+SUPERSCRIPT = dict(zip([ord(char) for char in "0123456789"], "⁰¹²³⁴⁵⁶⁷⁸⁹"))
+FULLWIDTH = dict(zip([ord(char) for char in "0123456789"], "０１２３４５６７８９"))
 
-TIMESTAMP_FORMAT = '%Y%m%d%H%M%S'
+TIMESTAMP_FORMAT = "%Y%m%d%H%M%S"
 
 
 def timestamp4now(now=datetime.now()):
@@ -28,9 +28,14 @@ def timestamp2date(timestamp):
 def slugify(value):
     if value is not None:
         import unicodedata
-        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
-        value = re.sub(r'[^\w\s-]', '', value).strip().lower()
-        value = re.sub(r'[-\s]+', '-', value)
+
+        value = (
+            unicodedata.normalize("NFKD", value)
+            .encode("ascii", "ignore")
+            .decode("ascii")
+        )
+        value = re.sub(r"[^\w\s-]", "", value).strip().lower()
+        value = re.sub(r"[-\s]+", "-", value)
     return value
 
 
@@ -49,9 +54,9 @@ def formatkv(kv, title=None):
     if title:
         a(title)
 
-    for (key, value) in kv:
+    for key, value in kv:
         if value:
-            if hasattr(value, '__format_value__'):
+            if hasattr(value, "__format_value__"):
                 text = value.__format_value__()
             else:
                 text = str(value)
@@ -70,25 +75,25 @@ def formatkv(kv, title=None):
     return "\n".join(o)
 
 
-def formatsize(size, binary=False, format='{:.1f}'):
+def formatsize(size, binary=False, format="{:.1f}"):
     if binary:
         base = 1024
-        suffixes = ('KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB')
+        suffixes = ("KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB")
     else:
         base = 1000
-        suffixes = ('kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
+        suffixes = ("kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
 
     bytes = float(size)
 
     if bytes == 1:
-        return '1 Byte'
+        return "1 Byte"
     if bytes < base:
-        return '{} Bytes'.format(bytes)
+        return "{} Bytes".format(bytes)
 
     for i, suffix in enumerate(suffixes):
         unit = base ** (i + 2)
         if bytes < unit:
             s = format.format(base * bytes / unit)
-            return s + ' {}'.format(suffix)
+            return s + " {}".format(suffix)
     s = format.format(base * bytes / unit)
-    return s + ' {}'.format(suffix)
+    return s + " {}".format(suffix)

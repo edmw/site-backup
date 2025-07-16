@@ -1,13 +1,13 @@
 # coding: utf-8
 
 """
-    ##     ## ##     ## ##     ## ##     ## ##     ## ########  
-    ##     ## ##     ## ###   ### ##     ## ##     ## ##     ## 
-    ##     ## ##     ## #### #### ##     ## ##     ## ##     ## 
-    ######### ##     ## ## ### ## ######### ##     ## ########  
-    ##     ## ##     ## ##     ## ##     ## ##     ## ##     ## 
-    ##     ## ##     ## ##     ## ##     ## ##     ## ##     ## 
-    ##     ##  #######  ##     ## ##     ##  #######  ########  
+##     ## ##     ## ##     ## ##     ## ##     ## ########
+##     ## ##     ## ###   ### ##     ## ##     ## ##     ##
+##     ## ##     ## #### #### ##     ## ##     ## ##     ##
+######### ##     ## ## ### ## ######### ##     ## ########
+##     ## ##     ## ##     ## ##     ## ##     ## ##     ##
+##     ## ##     ## ##     ## ##     ## ##     ## ##     ##
+##     ##  #######  ##     ## ##     ##  #######  ########
 """
 
 import os
@@ -24,6 +24,7 @@ from phply.phpparse import make_parser
 from phply.phpast import *
 
 from .error import SourceError
+
 
 class HHError(SourceError):
     def __init__(self, hh, message):
@@ -146,7 +147,7 @@ class HH(Reporter, object):
                                 self.dbpass = array_get(db, "password")
                 if not self.dbhost or not self.dbname:
                     raise HHConfigError(self, "no database given")
-                
+
     @ReporterCheck
     def queryDatabase(self):
         connection = None
@@ -158,18 +159,14 @@ class HH(Reporter, object):
                 user=self.dbuser,
                 password=self.dbpass,
                 charset=self.dbcharset,
-                use_unicode=True
+                use_unicode=True,
             )
             cursor = connection.cursor()
-            cursor.execute(
-                "SELECT value FROM setting"
-                " WHERE name = 'name'"
-            )
+            cursor.execute("SELECT value FROM setting" " WHERE name = 'name'")
             self.title = cursor.fetchone()[0]
             logging.debug("HH.queryDatabase: title={}".format(self.title))
             cursor.execute(
-                "SELECT value FROM setting"
-                " WHERE name = 'mailer.systemEmailAddress'"
+                "SELECT value FROM setting" " WHERE name = 'mailer.systemEmailAddress'"
             )
             self.email = cursor.fetchone()[0]
             logging.debug("HH.queryDatabase: email={}".format(self.email))
