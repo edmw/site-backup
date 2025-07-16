@@ -19,11 +19,15 @@ def minio_server():
     # Create temporary directory for MinIO data
     temp_dir = tempfile.mkdtemp(prefix="minio_test_")
 
+    process = None
     try:
         # Start MinIO server
+        minio = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "testing", "minio"
+        )
         process = subprocess.Popen(
             [
-                "minio",
+                minio,
                 "server",
                 temp_dir,
                 "--address",
@@ -65,9 +69,9 @@ def minio_server():
         }
 
     finally:
-        # Cleanup
-        process.terminate()
-        process.wait()
+        if process:
+            process.terminate()
+            process.wait()
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
