@@ -1,5 +1,3 @@
-# coding: utf-8$
-
 """
  ######     ###    ##       ######## ##    ## ########     ###    ########
 ##    ##   ## ##   ##       ##       ###   ## ##     ##   ## ##   ##     ##
@@ -21,7 +19,7 @@ class Calendar(calendar.HTMLCalendar):
     def __init__(self, archives, today=None):
         if today is None:
             today = date.today()
-        super(Calendar, self).__init__()
+        super().__init__()
         self.archives = sorted(archives, key=attrgetter("ctime"))
         self.first_archive = next(iter(self.archives), None)
         self.last_archive = next(reversed(self.archives), None)
@@ -31,7 +29,7 @@ class Calendar(calendar.HTMLCalendar):
         self.dates = Counter([archive.ctime.date() for archive in archives])
 
     def formatday(self, day, weekday):
-        h = super(Calendar, self).formatday(day, weekday)
+        h = super().formatday(day, weekday)
         if day:
             d = date(self.year, self.month, day)
             if d in self.dates:
@@ -48,7 +46,7 @@ class Calendar(calendar.HTMLCalendar):
     def formatmonth(self, theyear, themonth, withyear=True):
         self.year = theyear
         self.month = themonth
-        return super(Calendar, self).formatmonth(theyear, themonth, withyear=withyear)
+        return super().formatmonth(theyear, themonth, withyear=withyear)
 
     CSS = """
     body {

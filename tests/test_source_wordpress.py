@@ -1,6 +1,4 @@
-# coding: utf-8
-
-from mock import mock_open, patch
+from unittest.mock import mock_open, patch
 
 from backup.source.wordpress import WP
 
@@ -14,8 +12,8 @@ $table_prefix  = 'wp_';
 """
 
 
-@patch.object(WP, "checkConfig", return_value=True)
-@patch.object(WP, "queryDatabase")
+@patch.object(WP, "check_configuration", return_value=True)
+@patch.object(WP, "query_database")
 def test_construction(_mock_query, _mock_check):
     with patch(
         "backup.source.wordpress.open", mock_open(read_data=TEST_CONFIG), create=True

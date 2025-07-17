@@ -1,67 +1,67 @@
 [project]
-name = "site-backup"
-version = "1.0.0"
+dependencies = [
+  "boto3",
+  "coloredlogs",
+  "python-dateutil",
+  "humanfriendly",
+  "PyMySQL",
+  "phply",
+  "dsnparse",
+]
 description = "A tool to create backups of WordPress and HumHub instances"
+name = "site-backup"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "boto3",
-    "coloredlogs",
-    "python-dateutil",
-    "humanfriendly",
-    "PyMySQL",
-    "phply",
-    "dsnparse",
-]
+version = "1.0.0"
 
 [project.scripts]
 sitebackup = "sitebackup:main"
 
 [build-system]
-requires = ["hatchling"]
 build-backend = "hatchling.build"
+requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["backup"]
 
 [tool.uv]
 dev-dependencies = [
-    "pytest",
-    "pytest-logging",
-    "pytest-cov",
-    "coverage[toml]",
-    "mock",
-    "ruff",
-    "black>=25.1.0",
-    "requests",
+  "pytest",
+  "pytest-logging",
+  "pytest-cov",
+  "coverage[toml]",
+  "mock",
+  "ruff",
+  "black>=25.1.0",
+  "requests",
 ]
 
 [tool.pytest.ini_options]
+addopts = "-v --tb=short -m 'not integration' --cov=backup --cov=sitebackup --cov-report=term-missing --cov-report=html --cov-report=xml"
 markers = [
-    "unit: marks tests as unit tests",
-    "integration: marks tests as integration tests (may require external services)",
+  "unit: marks tests as unit tests",
+  "integration: marks tests as integration tests (may require external services)",
 ]
-testpaths = ["tests"]
+python_classes = ["Test*"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-python_classes = ["Test*"]
-addopts = "-v --tb=short -m 'not integration' --cov=backup --cov=sitebackup --cov-report=term-missing --cov-report=html --cov-report=xml"
+testpaths = ["tests"]
 # Use: uv run pytest -m integration  to run integration tests
 
 [tool.coverage.run]
-source = ["backup", "sitebackup"]
 omit = [
-    "tests/*",
-    "*/tests/*",
-    "*/__pycache__/*",
-    "venv/*",
-    ".venv/*",
+  "tests/*",
+  "*/tests/*",
+  "*/__pycache__/*",
+  "venv/*",
+  ".venv/*",
 ]
+source = ["backup", "sitebackup"]
 
 [tool.coverage.report]
 exclude_lines = [
-    "pragma: no cover",
-    "@(abc\\.)?abstractmethod",
+  "pragma: no cover",
+  "@(abc\\.)?abstractmethod",
 ]
 
 [tool.coverage.html]
@@ -76,33 +76,33 @@ target-version = "py312"
 
 # Exclude directories
 exclude = [
-    ".git",
-    ".venv",
-    ".vscode",
-    "__pycache__",
-    "htmlcov",
-    ".pytest_cache",
+  ".git",
+  ".venv",
+  ".vscode",
+  "__pycache__",
+  "htmlcov",
+  ".pytest_cache",
 ]
 
 [tool.ruff.lint]
 # Enable rules equivalent to the flake8 setup
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings  
-    "F",   # pyflakes
-    "C90", # mccabe complexity
-    "UP",  # pyupgrade compatibility
-    "I",   # import errors
-    "N",   # naming conventions
-    "U",   # unused imports
-    "B",   # bugbear compatibility
-#    "D",   # docstring conventions
+  "E", # pycodestyle errors
+  "W", # pycodestyle warnings  
+  "F", # pyflakes  
+  "UP", # pyupgrade compatibility
+  "I", # import errors
+  "N", # naming conventions
+  "U", # unused imports
+  "B", # bugbear compatibility    
 ]
+#  "D",  # docstring conventions
+# "C90", # mccabe complexity
 
 # Ignore rules to maintain compatibility with existing code
 ignore = [
-    "E203",  # whitespace before ':'
-    "E266",  # too many leading '#' for block comment
+  "E203", # whitespace before ':'
+  "E266", # too many leading '#' for block comment
 ]
 
 # Per-file ignores

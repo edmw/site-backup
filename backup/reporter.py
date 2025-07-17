@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 Mixin and Decorators to collect and report
 success and failure of function calls.
@@ -7,13 +5,13 @@ success and failure of function calls.
 To use add the mixin to a class
 and decorate the functions to be observed:
 
-class IDoSomething(Reporter, object):
+class IDoSomething(Reporter):
 
-    @ReporterCheck
+    @reporter_check
     def doSomething(self):
         ...
 
-    @ReporterCheckResult
+    @reporter_check_result
     def iWillReturnAResult(self):
         ...
 
@@ -22,8 +20,9 @@ Then call object.reportResults() any time to generate a report.
 
 import re
 from collections import OrderedDict
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 from backup.utils import formatkv
 
@@ -31,14 +30,14 @@ from backup.utils import formatkv
 re_camel = re.compile(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))")
 
 
-class Reporter(object):
+class Reporter:
     """Mixin to store and report success and failure of function calls."""
 
     def __init__(self) -> None:
         self.parameters: OrderedDict[str, Any] = OrderedDict()
         self.results: OrderedDict[str, Any] = OrderedDict()
 
-    def storeParameter(self, fname: str, name: str, value: Any) -> None:
+    def store_parameter(self, fname: str, name: str, value: Any) -> None:
         """Store parameter and value for the given function.
 
         For consecutive calls with the same function name
@@ -53,7 +52,7 @@ class Reporter(object):
         else:
             self.parameters[fname] = (name, value)
 
-    def storeResult(self, fname: str, result: Any) -> None:
+    def store_result(self, fname: str, result: Any) -> None:
         """Store result for the given function.
 
         For consecutive calls with the same function name
@@ -68,7 +67,7 @@ class Reporter(object):
         else:
             self.results[fname] = result
 
-    def reportParameters(self) -> str:
+    def report_parameters(self) -> str:
         """Report parameters as formatted string of key and value pairs."""
         kv = []
         for fname, parameters in self.parameters.items():
@@ -82,59 +81,59 @@ class Reporter(object):
                 kv.append((fname, parameters))
         return formatkv(kv)
 
-    def reportResults(self) -> str:
+    def report_results(self) -> str:
         """Report results as fomatted string of key and value pairs."""
         kv = self.results.items()
         return formatkv(kv)
 
 
-def ReporterInspect(name: str) -> Callable[[Callable], Callable]:
+def reporter_inspect(name: str) -> Callable[[Callable], Callable]:
     """This decorator for a function will store a specified
     argument value for the given argument name.
     """
 
     def wrap(function: Callable) -> Callable:
         @wraps(function)
-        def checkedFunction(self, *args, **kwargs):
+        def checked_function(self, *args, **kwargs):
             if name in kwargs:
-                self.storeParameter(function.__name__, name, kwargs[name])
+                self.store_parameter(function.__name__, name, kwargs[name])
             return function(self, *args, **kwargs)
 
-        return checkedFunction
+        return checked_function
 
     return wrap
 
 
-def ReporterCheck(function: Callable) -> Callable:
+def reporter_check(function: Callable) -> Callable:
     """This decorator for a function will store a success result
     if no exception is thrown while executing the function.
     """
 
     @wraps(function)
-    def checkedFunction(self, *args, **kwargs):
+    def checked_function(self, *args, **kwargs):
         try:
             function(self, *args, **kwargs)
-            self.storeResult(function.__name__, True)
+            self.store_result(function.__name__, True)
         except BaseException:
-            self.storeResult(function.__name__, False)
+            self.store_result(function.__name__, False)
             raise
 
-    return checkedFunction
+    return checked_function
 
 
-def ReporterCheckResult(function: Callable) -> Callable:
+def reporter_check_result(function: Callable) -> Callable:
     """This decorator will store the result of the function call
     if no exception is thrown while executing the function.
     """
 
     @wraps(function)
-    def checkedFunction(self, *args, **kwargs):
+    def checked_function(self, *args, **kwargs):
         try:
             result = function(self, *args, **kwargs)
-            self.storeResult(function.__name__, result)
+            self.store_result(function.__name__, result)
             return result
         except BaseException:
-            self.storeResult(function.__name__, False)
+            self.store_result(function.__name__, False)
             raise
 
-    return checkedFunction
+    return checked_function

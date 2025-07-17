@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 ########     ###    ########    ###    ########     ###     ######  ########
 ##     ##   ## ##      ##      ## ##   ##     ##   ## ##   ##    ## ##
@@ -18,7 +16,7 @@ import subprocess
 
 import humanfriendly
 
-from backup.reporter import Reporter, ReporterCheckResult
+from backup.reporter import Reporter, reporter_check_result
 from backup.utils import formatkv
 
 
@@ -45,11 +43,11 @@ class DBResult(collections.namedtuple("Result", ["size", "numberOfTables"])):
         return f"Result(size={size}, numberOfTables={self.numberOfTables})"
 
 
-class DB(Reporter, object):
+class DB(Reporter):
     def __init__(
         self, db: str, host: str, user: str, password: str, prefix: str
     ) -> None:
-        super(DB, self).__init__()
+        super().__init__()
 
         self.db = db
         self.host = host
@@ -99,8 +97,8 @@ class DB(Reporter, object):
 
         return [line for line in stdoutdata.splitlines() if len(line.strip()) > 0]
 
-    @ReporterCheckResult
-    def dumpToArchive(self, archive):
+    @reporter_check_result
+    def dump_to_archive(self, archive):
         tables = self.tables()
         if not tables:
             raise DBError(self, "no tables to dump")

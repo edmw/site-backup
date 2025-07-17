@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 ######## #### ##       ########  ######  ##    ##  ######  ######## ######## ##     ##
 ##        ##  ##       ##       ##    ##  ##  ##  ##    ##    ##    ##       ###   ###
@@ -13,7 +11,7 @@
 import logging
 import os
 
-from backup.reporter import Reporter, ReporterCheck
+from backup.reporter import Reporter, reporter_check
 from backup.utils import formatkv
 
 
@@ -30,9 +28,9 @@ class FSNotFoundError(FSError):
     pass
 
 
-class FS(Reporter, object):
+class FS(Reporter):
     def __init__(self, path: str) -> None:
-        super(FS, self).__init__()
+        super().__init__()
 
         self.path = path
 
@@ -47,7 +45,7 @@ class FS(Reporter, object):
             title="FILESYSTEM",
         )
 
-    @ReporterCheck
-    def addToArchive(self, archive):
+    @reporter_check
+    def add_to_archive(self, archive):
         logging.debug("add path '%s' to archive '%s'", self.path, archive.name)
         archive.addPath(self.path, name=archive.name)

@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 ######## ##     ## #### ##    ## ##    ## #### ##    ##  ######
    ##    ##     ##  ##  ###   ## ###   ##  ##  ###   ## ##    ##
@@ -13,9 +11,10 @@
 import logging
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from operator import add, attrgetter
-from typing import Iterable, Protocol, override
+from typing import Protocol, override
 
 from dateutil.relativedelta import relativedelta
 
@@ -30,7 +29,7 @@ DateLike = datetime | SupportsLessThan
 class ThinningStrategy(ABC):
 
     @classmethod
-    def fromArgument(cls, string: str) -> "ThinningStrategy":
+    def from_argument(cls, string: str) -> "ThinningStrategy":
         # strategy: latest
         # string contains number of latest backups to keep
         match = re.match(r"L([1-9]\d*)|.*", string)
@@ -70,7 +69,7 @@ class ThinningStrategy(ABC):
         intersection is guaranteed to be the empty set.
     """
 
-    def executeOn(
+    def execute_on(
         self,
         dates: Iterable[DateLike],
         attr: str | None = None,

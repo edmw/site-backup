@@ -1,5 +1,3 @@
-# coding: utf-8
-
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from random import randint
@@ -98,13 +96,13 @@ def somedays() -> list[Day]:
 def test_argument_factory():
     # invalid parameters
     with pytest.raises(ValueError):
-        ThinningStrategy.fromArgument("A")
+        ThinningStrategy.from_argument("A")
     with pytest.raises(ValueError):
-        ThinningStrategy.fromArgument("L0")
+        ThinningStrategy.from_argument("L0")
     with pytest.raises(ValueError):
-        ThinningStrategy.fromArgument("-1")
+        ThinningStrategy.from_argument("-1")
     # valid parameters
-    s = ThinningStrategy.fromArgument("L17")
+    s = ThinningStrategy.from_argument("L17")
     assert type(s) is LatestStrategy
 
 
@@ -119,13 +117,13 @@ def assert_thinning_on(dates, indates, outdates):
 def test_thinning_latest():
     lastday = datetime(2222, 2, 2, 22, 22, 22)
     dates = everyday(lastday)
-    (indates, outdates) = LatestStrategy(17).executeOn(dates)
+    (indates, outdates) = LatestStrategy(17).execute_on(dates)
     assert_thinning_on(dates, indates, outdates)
     assert len(indates) == 17
     assert len(outdates) == len(dates) - 17
     min_indate = min(indates)
     assert all(outdate < min_indate for outdate in outdates)
-    (indates, outdates) = LatestStrategy(17171717).executeOn(dates)
+    (indates, outdates) = LatestStrategy(17171717).execute_on(dates)
     assert_thinning_on(dates, indates, outdates)
     assert len(indates) == len(dates)
     assert len(outdates) == 0
@@ -138,11 +136,11 @@ def test_thin_out():
     fixdate = datetime(2222, 1, 31)
 
     # test empty
-    (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn([], fix=fixdate)
+    (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on([], fix=fixdate)
     assert_thinning_on([], indates, outdates)
     assert len(indates) == 0
     assert len(outdates) == 0
-    (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+    (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on(
         [], fix=fixdate, attr="timestamp"
     )
     assert_thinning_on([], indates, outdates)
@@ -150,34 +148,34 @@ def test_thin_out():
     assert len(outdates) == 0
 
     dates = everyday(lastday)
-    (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(dates, fix=fixdate)
+    (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on(dates, fix=fixdate)
     assert_thinning_on(dates, indates, outdates)
     # thin out again - must be the same result
-    (indates2, outdates2) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate)
+    (indates2, outdates2) = ThinOutStrategy(2, 3, 2).execute_on(indates, fix=fixdate)
     assert_thinning_on(indates, indates2, outdates2)
     assert len(indates2) == len(indates)
     assert len(outdates2) == 0
     # fast forward
     for _ in range(0, 100):
         fixdate = fixdate + timedelta(weeks=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate)
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on(indates, fix=fixdate)
     assert len(indates) == 10  # there must always be 9 yearly dates + latest
     # fast forward again (add a date first)
     indates.add(fixdate)
     for _ in range(0, 100):
         fixdate = fixdate + timedelta(weeks=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(indates, fix=fixdate)
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on(indates, fix=fixdate)
     assert len(indates) == 10  # there must always be 10 yearly dates now
 
     fixdate = datetime(2018, 3, 21)
     dates = somedays()
-    (indates, outdates) = ThinOutStrategy(7, 7, 7).executeOn(
+    (indates, outdates) = ThinOutStrategy(7, 7, 7).execute_on(
         dates, fix=fixdate, attr="timestamp"
     )
     assert_thinning_on(dates, indates, outdates)
     assert len(indates) == 21
     # thin out again - must be the same result
-    (indates2, outdates2) = ThinOutStrategy(7, 7, 7).executeOn(
+    (indates2, outdates2) = ThinOutStrategy(7, 7, 7).execute_on(
         indates, fix=fixdate, attr="timestamp"
     )
     assert_thinning_on(indates, indates2, outdates2)
@@ -187,14 +185,14 @@ def test_thin_out():
     # fast forward (days)
     for _ in range(0, 100):
         fixdate = fixdate + timedelta(days=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on(
             indates, fix=fixdate, attr="timestamp"
         )
     assert len(indates) == 6
     # fast forward (weeks)
     for _ in range(0, 100):
         fixdate = fixdate + timedelta(weeks=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on(
             indates, fix=fixdate, attr="timestamp"
         )
     assert len(indates) == 6
@@ -202,7 +200,7 @@ def test_thin_out():
     fixdate = datetime(2018, 3, 21)
     for _ in range(0, 100):
         fixdate = fixdate - timedelta(days=1)
-        (indates, outdates) = ThinOutStrategy(2, 3, 2).executeOn(
+        (indates, outdates) = ThinOutStrategy(2, 3, 2).execute_on(
             indates, fix=fixdate, attr="timestamp"
         )
     assert len(indates) == 6

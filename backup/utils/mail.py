@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import subprocess
 from collections import namedtuple
 from email.header import Header
@@ -24,7 +22,7 @@ class Attachment(namedtuple("Attachment", ["name", "mimetype", "data"])):
     __slots__ = ()
 
 
-def sendMail(
+def send_mail(
     send_to: list[str],
     send_from: str,
     subject: str,
@@ -68,7 +66,7 @@ Recipient = namedtuple("Recipient", ["mail"])
 
 class MailerError(Exception):
     def __init__(self, mailer, message):
-        super(MailerError, self).__init__()
+        super().__init__()
         self.mailer = mailer
         self.message = message
 
@@ -76,7 +74,7 @@ class MailerError(Exception):
         return f"MailerError({self.message!r})"
 
 
-class Mailer(object):
+class Mailer:
 
     def __init__(self):
         self.sender = None
@@ -98,10 +96,10 @@ class Mailer(object):
         str_template = "Mailer(" + LF + "{0}," + LF + "{1}" + LF + ")"
         return str_template.format(str_sender, str_recipients)
 
-    def setSender(self, sender):
+    def set_sender(self, sender):
         self.sender = sender
 
-    def addRecipient(self, recipient):
+    def add_recipient(self, recipient):
         self.recipients.append(recipient)
 
     def serviceable(self):
@@ -114,4 +112,4 @@ class Mailer(object):
         mail_to = [r.mail for r in self.recipients] or None
         if mail_to is None:
             raise MailerError(self, "No recipient specified!")
-        sendMail(mail_to, mail_from, subject, text, attachments, priority)
+        send_mail(mail_to, mail_from, subject, text, attachments, priority)

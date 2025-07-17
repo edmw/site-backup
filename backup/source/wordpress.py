@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 ##      ##  #######  ########  ########  ########  ########  ########  ######   ######
 ##  ##  ## ##     ## ##     ## ##     ## ##     ## ##     ## ##       ##    ## ##    ##
@@ -15,7 +13,7 @@ import re
 
 import pymysql as mysql
 
-from backup.reporter import Reporter, ReporterCheck
+from backup.reporter import Reporter, reporter_check
 from backup.utils import formatkv, slugify
 
 from .error import SourceError
@@ -23,7 +21,7 @@ from .error import SourceError
 
 class WPError(SourceError):
     def __init__(self, wp, message):
-        super(WPError, self).__init__()
+        super().__init__()
         self.wp = wp
         self.message = message
 
@@ -39,9 +37,9 @@ class WPDatabaseError(WPError):
     pass
 
 
-class WP(Reporter, object):
+class WP(Reporter):
     def __init__(self, path, **kwargs):
-        super(WP, self).__init__()
+        super().__init__()
 
         self.fspath = path
         self.fsconfig = os.path.join(path, "wp-config.php")
@@ -61,12 +59,12 @@ class WP(Reporter, object):
         self.slug = None
 
         # check preconditions
-        if not self.checkConfig():
+        if not self.check_configuration():
             raise WPNotFoundError(
                 self, f"no wordpress instance found at '{self.fspath}'"
             )
 
-        self.parseConfiguration()
+        self.parse_configuration()
 
         if kwargs:
             if kwargs["dbname"]:
@@ -82,12 +80,12 @@ class WP(Reporter, object):
             if kwargs["dbprefix"]:
                 self.dbprefix = kwargs["dbprefix"]
 
-        self.queryDatabase()
+        self.query_database()
 
         self.description = f"Wordpress Blog '{self.title}'"
         self.slug = slugify(self.title)
 
-    def checkConfig(self):
+    def check_configuration(self):
         return os.path.exists(self.fspath) and os.path.isfile(self.fsconfig)
 
     def __str__(self):
@@ -106,8 +104,8 @@ class WP(Reporter, object):
             title="WORDPRESS",
         )
 
-    @ReporterCheck
-    def parseConfiguration(self):
+    @reporter_check
+    def parse_configuration(self):
         # regular expression for php defines:
         #   define('KEY', 'VALUE');
         re_define = re.compile(
@@ -162,8 +160,8 @@ class WP(Reporter, object):
                 self.dbhost = host
                 self.dbport = int(port) if port else self.dbport
 
-    @ReporterCheck
-    def queryDatabase(self):
+    @reporter_check
+    def query_database(self):
         assert self.dbname, "database name not set"
         assert self.dbhost, "database host not set"
         assert self.dbuser, "database user not set"

@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# coding: utf-8
 
 """
 Script to backup a Wordpress Blog instance.
@@ -12,10 +11,11 @@ import functools
 import logging
 import os
 import sys
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from backup import Backup
-from backup.source import SourceErrors, SourceFactory
+from backup.source import SourceFactory, SourceMultipleError
 from backup.target.s3 import S3
 from backup.thinning import ThinningStrategy
 from backup.utils.mail import Mailer, Recipient, Sender
@@ -130,7 +130,7 @@ def main(args: list[str] | None = None) -> None:
         "--thinning",
         action="store",
         metavar="STRATEGY",
-        type=functools.partial(value_argument, callee=ThinningStrategy.fromArgument),
+        type=functools.partial(value_argument, callee=ThinningStrategy.from_argument),
         help="thin out backups at targets (except local target) using the specified strategy",
     )
 
@@ -232,7 +232,7 @@ def main(args: list[str] | None = None) -> None:
             dbpass=arguments.dbpass,
             dbprefix=arguments.dbprefix,
         )
-    except SourceErrors as exception:
+    except SourceMultipleError as exception:
         logging.error(f"Site-Backup: {exception}")
         sys.exit(1)
     else:
@@ -260,10 +260,10 @@ def main(args: list[str] | None = None) -> None:
     mailer = Mailer() if arguments.mail_from else None
     if mailer:
         if arguments.mail_to_admin:
-            mailer.addRecipient(Recipient(source.email))
+            mailer.add_recipient(Recipient(source.email))
         if arguments.mail_to:
-            mailer.addRecipient(Recipient(arguments.mail_to))
-        mailer.setSender(Sender(arguments.mail_from))
+            mailer.add_recipient(Recipient(arguments.mail_to))
+        mailer.set_sender(Sender(arguments.mail_from))
 
     # initialize and execute backup
 

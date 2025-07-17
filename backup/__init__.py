@@ -1,8 +1,7 @@
-# coding: utf-8
-
 """
 Create a backup archive from a database and a filesystem.
 """
+
 __version__ = "1.0.0"
 
 import functools
@@ -15,7 +14,7 @@ from backup.archive import Archive
 from backup.calendar import Calendar
 from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
-from backup.reporter import Reporter, ReporterInspect
+from backup.reporter import Reporter, reporter_inspect
 from backup.target.s3 import S3Error
 from backup.utils import LF, LFLF, formatkv
 from backup.utils.mail import Attachment, Mailer, Priority
@@ -31,7 +30,7 @@ from backup.utils.mail import Attachment, Mailer, Priority
 """
 
 
-class Backup(Reporter, object):
+class Backup(Reporter):
     """Class to create a backup from a database and a filesystem.
 
     To use initialize with a source and call execute with the desired
@@ -46,7 +45,7 @@ class Backup(Reporter, object):
         mailer: Mailer | None = None,
         quiet: bool = False,
     ) -> None:  # TODO: Type source when base interface exists
-        super(Backup, self).__init__()
+        super().__init__()
         self.source = source
         self.mailer = mailer
         self.quiet = quiet
@@ -72,7 +71,7 @@ class Backup(Reporter, object):
         if not self.quiet:
             print(text)
 
-    def backupDatabase(self, archive: Archive) -> DB:
+    def backup_database(self, archive: Archive) -> DB:
         """Creates a database backup and stores it into the archive."""
         self.message(f"Processing database of {self.source.description}")
 
@@ -83,18 +82,18 @@ class Backup(Reporter, object):
             self.source.dbpass,
             self.source.dbprefix,
         )
-        db.dumpToArchive(archive)
+        db.dump_to_archive(archive)
         return db
 
-    def backupFilesystem(self, archive: Archive) -> FS:
+    def backup_filesystem(self, archive: Archive) -> FS:
         """Creates filesystem backup and stores it into the archive."""
         self.message(f"Processing filesystem of {self.source.description}")
 
         fs = FS(self.source.fspath)
-        fs.addToArchive(archive)
+        fs.add_to_archive(archive)
         return fs
 
-    def sendReport(
+    def send_report(
         self,
         reporters: list[Any],
         mailer: Mailer,
@@ -129,10 +128,10 @@ class Backup(Reporter, object):
 
         self.message(report)
 
-    @ReporterInspect("dry")
-    @ReporterInspect("database")
-    @ReporterInspect("filesystem")
-    @ReporterInspect("thinning")
+    @reporter_inspect("dry")
+    @reporter_inspect("database")
+    @reporter_inspect("filesystem")
+    @reporter_inspect("thinning")
     def execute(
         self,
         targets,
@@ -182,14 +181,14 @@ class Backup(Reporter, object):
                     self.message(f"Creating archive for {self.source.description}")
 
                     if database is True:
-                        reporter = self.backupDatabase(archive)
+                        reporter = self.backup_database(archive)
                         reporters.append(reporter)
 
                     if filesystem is True:
-                        reporter = self.backupFilesystem(archive)
+                        reporter = self.backup_filesystem(archive)
                         reporters.append(reporter)
 
-                    archive.addManifest(archive.timestamp)
+                    archive.add_manifest(archive.timestamp)
 
                 # transfer archive to targets
 
@@ -249,7 +248,7 @@ class Backup(Reporter, object):
                             )
                         )
 
-                self.sendReport(reporters, self.mailer, attachments)
+                self.send_report(reporters, self.mailer, attachments)
 
             return "OK"
 
@@ -257,4 +256,4 @@ class Backup(Reporter, object):
             self.error = e
             self.etime = time.monotonic()
             if self.mailer and self.mailer.serviceable():
-                self.sendReport(reporters, self.mailer)
+                self.send_report(reporters, self.mailer)

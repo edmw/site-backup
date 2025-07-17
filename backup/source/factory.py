@@ -1,11 +1,9 @@
-# coding: utf-8
-
 from typing import TypedDict
 
 from backup.source.humhub import HH, HHError
 from backup.source.wordpress import WP, WPError
 
-from .error import SourceErrors
+from .error import SourceMultipleError
 
 
 class SourceConfig(TypedDict, total=False):
@@ -19,9 +17,9 @@ class SourceConfig(TypedDict, total=False):
     dbprefix: str
 
 
-class SourceFactory(object):
+class SourceFactory:
     def __init__(self, path: str) -> None:
-        super(SourceFactory, self).__init__()
+        super().__init__()
         self.path = path
 
     def create(
@@ -43,4 +41,4 @@ class SourceFactory(object):
         else:
             return source
 
-        raise SourceErrors("Can't create source", errors)
+        raise SourceMultipleError("Can't create source", errors)

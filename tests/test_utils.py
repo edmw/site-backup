@@ -1,5 +1,3 @@
-# coding: utf-8
-
 from backup.utils import formatsize, slugify, timestamp2date, timestamp4now
 
 

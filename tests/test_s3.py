@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import os
 import shutil
 import subprocess
@@ -134,7 +132,7 @@ def test_connection_and_list_empty_bucket(s3_config):
     """Test connection and listing empty bucket."""
     s3 = S3(**s3_config)
     try:
-        archives = s3.listArchives()
+        archives = s3.list_archives()
         assert isinstance(archives, list)
         # Bucket might not exist initially, which is okay
     except S3Error as e:
@@ -149,7 +147,7 @@ def test_transfer_archive_success(s3_config, mock_archive):
     """Test successful archive transfer."""
     s3 = S3(**s3_config)
 
-    result = s3.transferArchive(mock_archive)
+    result = s3.transfer_archive(mock_archive)
 
     assert isinstance(result, S3Result)
     assert result.size > 0
@@ -162,7 +160,7 @@ def test_transfer_archive_dry_run(s3_config, mock_archive):
     """Test archive transfer in dry run mode."""
     s3 = S3(**s3_config)
 
-    result = s3.transferArchive(mock_archive, dry=True)
+    result = s3.transfer_archive(mock_archive, dry=True)
 
     assert isinstance(result, S3Result)
     assert result.size == 0
@@ -175,10 +173,10 @@ def test_list_archives_after_upload(s3_config, mock_archive):
     s3 = S3(**s3_config)
 
     # Upload archive
-    s3.transferArchive(mock_archive)
+    s3.transfer_archive(mock_archive)
 
     # List archives
-    archives = s3.listArchives("test")
+    archives = s3.list_archives("test")
 
     # Should find our uploaded archive
     uploaded_names = [getattr(arch, "filename", str(arch)) for arch in archives]
@@ -194,14 +192,14 @@ def test_thinning_delete_all(s3_config, mock_archive):
     s3 = S3(**s3_config)
 
     # First upload an archive
-    s3.transferArchive(mock_archive)
+    s3.transfer_archive(mock_archive)
 
     # Define thinning strategy (delete everything)
     def delete_all_strategy(archives):
         return [], archives  # Keep nothing, delete all
 
     # Perform thinning
-    thin_result = s3.performThinning("test", delete_all_strategy)
+    thin_result = s3.perform_thinning("test", delete_all_strategy)
 
     assert isinstance(thin_result, S3ThinningResult)
     assert thin_result.archivesRetained == 0
@@ -213,7 +211,7 @@ def test_thinning_delete_all(s3_config, mock_archive):
     )
 
     # Verify archives were deleted
-    remaining_archives = s3.listArchives("test")
+    remaining_archives = s3.list_archives("test")
     assert len(remaining_archives) == 0
 
 
@@ -238,14 +236,14 @@ def test_thinning_keep_some(s3_config):
             mock_arch.filename = archive_name
             mock_arch.label = "test"
 
-            s3.transferArchive(mock_arch)
+            s3.transfer_archive(mock_arch)
 
         # Define thinning strategy (keep first 2, delete rest)
         def keep_two_strategy(archives):
             return archives[:2], archives[2:]
 
         # Perform thinning
-        thin_result = s3.performThinning("test", keep_two_strategy)
+        thin_result = s3.perform_thinning("test", keep_two_strategy)
 
         assert thin_result.archivesRetained == 2
         assert thin_result.archivesDeleted >= 1
@@ -270,7 +268,7 @@ def test_error_handling_invalid_credentials():
     )
 
     with pytest.raises(S3Error):
-        invalid_s3.listArchives()
+        invalid_s3.list_archives()
 
 
 @pytest.mark.integration
@@ -284,7 +282,7 @@ def test_error_handling_invalid_host():
     )
 
     with pytest.raises(S3Error):
-        invalid_s3.listArchives()
+        invalid_s3.list_archives()
 
 
 @pytest.mark.integration
@@ -312,7 +310,7 @@ def test_progress_with_large_file(s3_config, capsys):
             original_isatty = sys.stdin.isatty
             sys.stdin.isatty = lambda: True
 
-            result = s3.transferArchive(mock_archive)
+            result = s3.transfer_archive(mock_archive)
 
             # Restore original isatty
             sys.stdin.isatty = original_isatty

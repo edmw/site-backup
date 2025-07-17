@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 Transfer a backup archive to a cloud service using the S3 API.
 
@@ -28,7 +26,7 @@ from botocore.exceptions import (
 )
 
 from backup.archive import Archive
-from backup.reporter import Reporter, ReporterCheckResult
+from backup.reporter import Reporter, reporter_check_result
 from backup.utils import formatkv
 
 
@@ -36,7 +34,7 @@ class S3Error(Exception):
     """Base Exception for errors while using a cloud service."""
 
     def __init__(self, s3, message):
-        super(S3Error, self).__init__()
+        super().__init__()
         self.s3 = s3
         self.message = message
 
@@ -68,7 +66,7 @@ class S3ThinningResult(
         )
 
 
-class S3(Reporter, object):
+class S3(Reporter):
     """Class using a cloud service with the S3 API to transfer an archive.
 
     To use initialize with the configuration of a compatible cloud service
@@ -81,7 +79,7 @@ class S3(Reporter, object):
     """
 
     def __init__(self, host, accesskey, secretkey, bucket, port=None, is_secure=True):
-        super(S3, self).__init__()
+        super().__init__()
 
         self.host = host
         self.port = port
@@ -147,7 +145,7 @@ class S3(Reporter, object):
                 sys.stdout.write("\n")
             sys.stdout.flush()
 
-    def listArchives(self, label=None):
+    def list_archives(self, label=None):
         try:
             archives = []
 
@@ -177,8 +175,8 @@ class S3(Reporter, object):
         except socket.gaierror as e:
             raise S3Error(self, repr(e)) from e
 
-    @ReporterCheckResult
-    def transferArchive(self, archive, dry=False):
+    @reporter_check_result
+    def transfer_archive(self, archive, dry=False):
         """Transfers the given archive to the configured cloud service.
 
         If the configured bucket does not exist it will be created.
@@ -229,8 +227,8 @@ class S3(Reporter, object):
         except socket.gaierror as e:
             raise S3Error(self, repr(e)) from e
 
-    @ReporterCheckResult
-    def performThinning(self, label, thinArchives, dry=False):
+    @reporter_check_result
+    def perform_thinning(self, label, thin_archives, dry=False):
         """Deletes obsolete archives from the configured cloud service.
 
         Collects all archives in the configured bucket and decides which
@@ -239,18 +237,18 @@ class S3(Reporter, object):
 
         """
         try:
-            archives = self.listArchives(label)
+            archives = self.list_archives(label)
 
-            toRetain, toDelete = thinArchives(archives)
+            to_retain, to_delete = thin_archives(archives)
 
             if not dry:
-                for archive in toDelete:
+                for archive in to_delete:
                     self.s3_client.delete_object(
                         Bucket=self.bucket, Key=archive.filename
                     )
-                return S3ThinningResult(len(toRetain), len(toDelete))
+                return S3ThinningResult(len(to_retain), len(to_delete))
             else:
-                return S3ThinningResult(len(toRetain), len(toDelete))
+                return S3ThinningResult(len(to_retain), len(to_delete))
 
         except ClientError as e:
             raise S3Error(self, repr(e)) from e

@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 ##     ## ##     ## ##     ## ##     ## ##     ## ########
 ##     ## ##     ## ###   ### ##     ## ##     ## ##     ##
@@ -19,7 +17,7 @@ from phply import phplex
 from phply.phpast import Array, Return
 from phply.phpparse import make_parser
 
-from backup.reporter import Reporter, ReporterCheck
+from backup.reporter import Reporter, reporter_check
 from backup.utils import formatkv, slugify
 
 from .error import SourceError
@@ -27,7 +25,7 @@ from .error import SourceError
 
 class HHError(SourceError):
     def __init__(self, hh, message):
-        super(HHError, self).__init__()
+        super().__init__()
         self.hh = hh
         self.message = message
 
@@ -47,9 +45,9 @@ class HHDatabaseError(HHError):
     pass
 
 
-class HH(Reporter, object):
+class HH(Reporter):
     def __init__(self, path, **kwargs):
-        super(HH, self).__init__()
+        super().__init__()
 
         self.fspath = path
         self.fsconfig = os.path.join(path, "protected/config/dynamic.php")
@@ -67,10 +65,10 @@ class HH(Reporter, object):
         self.slug = None
 
         # check preconditions
-        if not self.checkConfig():
+        if not self.check_configuration():
             raise HHNotFoundError(self, f"no humhub instance found at '{self.fspath}'")
 
-        self.parseConfiguration()
+        self.parse_configuration()
 
         if kwargs:
             if kwargs["dbname"]:
@@ -86,12 +84,12 @@ class HH(Reporter, object):
             if kwargs["dbprefix"]:
                 self.dbprefix = kwargs["dbprefix"]
 
-        self.queryDatabase()
+        self.query_database()
 
         self.description = f"Humhub '{self.title}'"
         self.slug = slugify(self.title)
 
-    def checkConfig(self):
+    def check_configuration(self):
         return os.path.exists(self.fspath) and os.path.isfile(self.fsconfig)
 
     def __str__(self):
@@ -109,8 +107,8 @@ class HH(Reporter, object):
             title="HUMHUB",
         )
 
-    @ReporterCheck
-    def parseConfiguration(self):
+    @reporter_check
+    def parse_configuration(self):
         dns_re = re.compile(r"^mysql:host=([^;]+);dbname=(.+)$")
 
         def array_get(array, key):
@@ -145,8 +143,8 @@ class HH(Reporter, object):
                 if not self.dbhost or not self.dbname:
                     raise HHConfigError(self, "no database given")
 
-    @ReporterCheck
-    def queryDatabase(self):
+    @reporter_check
+    def query_database(self):
         assert self.dbname, "database name not set"
         assert self.dbhost, "database host not set"
         assert self.dbuser, "database user not set"
