@@ -12,18 +12,19 @@
 
 import logging
 import re
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from operator import add, attrgetter
+from typing import Iterable, Protocol, override
 
 from dateutil.relativedelta import relativedelta
 
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+
+class SupportsLessThan(Protocol):
+    def __lt__(self, other: object) -> bool: ...
 
 
-class ThinningStrategy(object):
+class ThinningStrategy(ABC):
 
     @classmethod
     def fromArgument(cls, string):
@@ -42,13 +43,16 @@ class ThinningStrategy(object):
             if numbers and all(numbers):
                 return ThinOutStrategy(*(map(int, numbers)))
 
-        raise ValueError("not a valid strategy '{}'".format(string))
+        raise ValueError(f"not a valid strategy '{string}'")
 
     """ Implementation of specific thinning strategy:
         'dates' are guranteed to be sorted from newest to oldest.
     """
 
-    def __execute__(self, dates, attr=None, fix=None):
+    @abstractmethod
+    def __execute__(
+        self, dates: list[datetime | SupportsLessThan], attr=None, fix=None
+    ):
         raise NotImplementedError
 
     """ Thinout the given set of dates.
@@ -60,34 +64,41 @@ class ThinningStrategy(object):
         intersection is guaranteed to be the empty set.
     """
 
-    def executeOn(self, dates, attr=None, fix=datetime.now()):
+    def executeOn(
+        self, dates: Iterable[datetime | SupportsLessThan], attr=None, fix=None
+    ):
+        if fix is None:
+            fix = datetime.now()
         dates = sorted(dates) if attr is None else sorted(dates, key=attrgetter(attr))
-        dates = reversed(dates)
-        return self.__execute__(list(dates), attr=attr, fix=fix)
+        dates = list(reversed(dates))
+        return self.__execute__(dates, attr=attr, fix=fix)
 
 
 class LatestStrategy(ThinningStrategy):
     """Keep the x most recent dates. Discard all others."""
 
-    def __init__(self, number):
+    def __init__(self, number: int):
         assert number > 0
         self.number = number
 
     def __str__(self):
-        return "LATEST {}".format(self.number)
+        return f"LATEST {self.number}"
 
-    def __execute__(self, dates, attr=None, fix=None):
-        assert isinstance(dates, Iterable)
+    @override
+    def __execute__(
+        self, dates: list[datetime | SupportsLessThan], attr=None, fix=None
+    ):
+        assert isinstance(dates, list)
 
-        logging.info("THINNING BY LATEST {}".format(self.number))
+        logging.info("THINNING BY LATEST %d", self.number)
 
         in_dates = dates[: self.number]
         out_dates = dates[self.number :]
 
         for in_date in in_dates:
-            logging.info("IN:  {}".format(repr(in_date)))
+            logging.info("IN:  %r", in_date)
         for out_date in out_dates:
-            logging.info("OUT: {}".format(repr(in_date)))
+            logging.info("OUT: %r", out_date)
 
         return (set(in_dates), set(out_dates))
 
@@ -103,17 +114,20 @@ class ThinOutStrategy(ThinningStrategy):
         self.months = months
 
     def __str__(self):
-        return "THIN OUT {}D{}W{}M".format(self.days, self.weeks, self.months)
+        return f"THIN OUT {self.days}D{self.weeks}W{self.months}M"
 
-    def __execute__(self, dates, attr=None, fix=None):
-        assert isinstance(dates, Iterable)
+    @override
+    def __execute__(
+        self, dates: list[datetime | SupportsLessThan], attr=None, fix=None
+    ):
+        assert isinstance(dates, list)
         assert fix is not None
 
         fix = fix.replace(microsecond=0, second=0, minute=0, hour=0)
 
-        logging.info("THINNING BY THIN OUT DAILY FOR {} DAYS".format(self.days))
-        logging.info("THINNING BY THIN OUT WEEKLY FOR {} WEEKS".format(self.weeks))
-        logging.info("THINNING BY THIN OUT MONTHLY FOR {} MONTHS".format(self.months))
+        logging.info("THINNING BY THIN OUT DAILY FOR %s DAYS", self.days)
+        logging.info("THINNING BY THIN OUT WEEKLY FOR %s WEEKS", self.weeks)
+        logging.info("THINNING BY THIN OUT MONTHLY FOR %s MONTHS", self.months)
         logging.info("THINNING BY THIN OUT YEARLY FOREVER")
 
         def head(dates):
@@ -147,8 +161,8 @@ class ThinOutStrategy(ThinningStrategy):
                 in_dates.append(in_date)
                 out_dates = dates_in_span[:-1]
             for in_date in in_dates:
-                logging.info("IN:  {}".format(repr(in_date)))
-            logging.info("OUT: #{}".format(len(out_dates)))
+                logging.info("IN:  %r", in_date)
+            logging.info("OUT: #%d", len(out_dates))
             return in_dates, out_dates
 
         in_dates = []
@@ -161,28 +175,28 @@ class ThinOutStrategy(ThinningStrategy):
         in_dates = in_dates + [d for d in dates if date_is_after(d, fix)]
         logging.info("FUTURE AND LATEST")
         for date in in_dates:
-            logging.info("IN:  {}".format(repr(date)))
+            logging.info("IN:  %r", date)
 
         # next, keep one date per day for self.days
         for d in range(0, self.days):
             day = fix - timedelta(days=d + 1)
-            logging.info("DAY {}".format(day.date()))
+            logging.info("DAY %s", day.date())
 
             day_dates = [d for d in dates if date_is_same_day(d, day)]
             if len(day_dates):
                 in_date = day_dates[-1]
                 in_dates.append(in_date)
-                logging.info("IN:  {}".format(repr(in_date)))
+                logging.info("IN:  {%r}", in_date)
                 other_dates = day_dates[:-1]
                 for out_date in other_dates:
-                    logging.info("OUT: {}".format(repr(out_date)))
+                    logging.info("OUT: %r", out_date)
                 out_dates = out_dates + other_dates
 
         # next keep one date per week for self.weeks
         for w in range(0, self.weeks):
             week_end = fix - timedelta(days=self.days, weeks=w)
             week_start = week_end - timedelta(weeks=1)
-            logging.info("WEEK {} - {}".format(week_start.date(), week_end.date()))
+            logging.info("WEEK %s - %s", week_start.date(), week_end.date())
 
             in_dates, out_dates = map(
                 add, [in_dates, out_dates], split_dates_in_span(week_start, week_end)
@@ -191,20 +205,20 @@ class ThinOutStrategy(ThinningStrategy):
         # this is tricky: adjust to months (keep all dates inbetween)
         weeks_end = fix - timedelta(days=self.days, weeks=self.weeks)
         fix_month = weeks_end.replace(day=1)
-        logging.info("ADJUSTMENT {} - {}".format(fix_month, weeks_end))
+        logging.info("ADJUSTMENT %s - %s", fix_month, weeks_end)
         adjustment_dates = [
             d for d in dates if date_is_in_span(d, fix_month, weeks_end)
         ]
         if len(adjustment_dates):
             for in_date in adjustment_dates:
-                logging.info("IN:  {}".format(repr(in_date)))
+                logging.info("IN:  %r", in_date)
             in_dates = in_dates + adjustment_dates
 
         # next keep one date per month for self.months
         for m in range(0, self.months):
             month_end = fix_month - relativedelta(months=m)
             month_start = month_end - relativedelta(months=1)
-            logging.info("MONTH {} - {}".format(month_start.date(), month_end.date()))
+            logging.info("MONTH %s - %s", month_start.date(), month_end.date())
 
             in_dates, out_dates = map(
                 add, [in_dates, out_dates], split_dates_in_span(month_start, month_end)
@@ -215,7 +229,7 @@ class ThinOutStrategy(ThinningStrategy):
         year_start = year_end - relativedelta(years=1)
         last_date = tail(dates)
         while last_date and year_end >= last_date:
-            logging.info("YEAR {} - {}".format(year_start.date(), year_end.date()))
+            logging.info("YEAR %s - %s", year_start.date(), year_end.date())
 
             in_dates, out_dates = map(
                 add, [in_dates, out_dates], split_dates_in_span(year_start, year_end)

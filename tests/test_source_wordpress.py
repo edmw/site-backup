@@ -1,9 +1,8 @@
 # coding: utf-8
 
-import pytest  # noqa: 401
-from mock import patch, mock_open
+from mock import mock_open, patch
 
-from backup.source.wordpress import WP, WPError
+from backup.source.wordpress import WP
 
 TEST_CONFIG = """
 define('DB_NAME', 'name');
@@ -17,7 +16,7 @@ $table_prefix  = 'wp_';
 
 @patch.object(WP, "checkConfig", return_value=True)
 @patch.object(WP, "queryDatabase")
-def testConstruction(*args):
+def test_construction(_mock_query, _mock_check):
     with patch(
         "backup.source.wordpress.open", mock_open(read_data=TEST_CONFIG), create=True
     ) as m:

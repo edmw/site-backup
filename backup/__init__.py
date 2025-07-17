@@ -3,25 +3,21 @@
 """
 Create a backup archive from a database and a filesystem.
 """
-from __future__ import print_function
-
 __version__ = "1.0.0"
 
-import time
 import functools
-import logging
+import time
 
 import humanfriendly
 
-from backup.reporter import Reporter, ReporterInspect
 from backup.archive import Archive
+from backup.calendar import Calendar
 from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
-from backup.target.s3 import S3, S3Error
-from backup.calendar import Calendar
+from backup.reporter import Reporter, ReporterInspect
+from backup.target.s3 import S3Error
 from backup.utils import LF, LFLF, formatkv
-from backup.utils.mail import Mailer, Priority, Attachment
-
+from backup.utils.mail import Attachment, Priority
 
 """
     ########     ###     ######  ##    ## ##     ## ########
@@ -72,7 +68,7 @@ class Backup(Reporter, object):
 
     def backupDatabase(self, archive):
         """Creates a database backup and stores it into the archive."""
-        self.message("Processing database of {}".format(self.source.description))
+        self.message(f"Processing database of {self.source.description}")
 
         db = DB(
             self.source.dbname,
@@ -86,7 +82,7 @@ class Backup(Reporter, object):
 
     def backupFilesystem(self, archive):
         """Creates filesystem backup and stores it into the archive."""
-        self.message("Processing filesystem of {}".format(self.source.description))
+        self.message(f"Processing filesystem of {self.source.description}")
 
         fs = FS(self.source.fspath)
         fs.addToArchive(archive)
@@ -107,7 +103,7 @@ class Backup(Reporter, object):
             reports.append(LF.join(out))
         report = LFLF.join(reports) + LFLF
 
-        subject = "[BACKUP] Archive for {}".format(self.source.description)
+        subject = f"[BACKUP] Archive for {self.source.description}"
         if self.error is None:
             subject = "👍" + subject
         else:
@@ -128,7 +124,7 @@ class Backup(Reporter, object):
     @ReporterInspect("thinning")
     def execute(
         self,
-        targets=None,
+        targets,
         database=False,
         filesystem=False,
         thinning=None,
@@ -158,11 +154,11 @@ class Backup(Reporter, object):
 
             return (inarchives, outarchives)
 
+        reporters: list[Reporter] = [self]
+
         try:
             # start of execution
             self.stime = time.monotonic()
-
-            reporters = [self]
 
             reporters.append(self.source)
 
@@ -172,9 +168,7 @@ class Backup(Reporter, object):
 
                 archive = Archive(self.source.slug)
                 with archive:
-                    self.message(
-                        "Creating archive for {}".format(self.source.description)
-                    )
+                    self.message(f"Creating archive for {self.source.description}")
 
                     if database is True:
                         reporter = self.backupDatabase(archive)
@@ -189,7 +183,7 @@ class Backup(Reporter, object):
                 # transfer archive to targets
 
                 for target in targets:
-                    self.message("Transfering archive to {}".format(target.description))
+                    self.message(f"Transfering archive to {target.description}")
                     target.transferArchive(archive, dry=dry)
 
             else:
@@ -200,9 +194,7 @@ class Backup(Reporter, object):
             if thinning:
                 for target in targets:
                     self.message(
-                        "Thinning archives on {} using strategy '{}'".format(
-                            target.description, thinning
-                        )
+                        f"Thinning archives on {target.description} using strategy '{thinning}'"
                     )
                     target.performThinning(
                         self.source.slug,
@@ -229,7 +221,7 @@ class Backup(Reporter, object):
                 reporters.append(target)
 
             if self.mailer and self.mailer.serviceable():
-                self.message("Sending report by {}".format(self.mailer))
+                self.message(f"Sending report by {self.mailer}")
 
                 attachments = []
 
@@ -240,9 +232,7 @@ class Backup(Reporter, object):
                     if doc:
                         attachments.append(
                             Attachment(
-                                "{}-{}-calendar.html".format(
-                                    self.source.slug, target.label
-                                ),
+                                f"{self.source.slug}-{target.label}-calendar.html",
                                 "text/html",
                                 doc,
                             )

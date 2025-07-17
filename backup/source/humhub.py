@@ -10,18 +10,17 @@
 ##     ##  #######  ##     ## ##     ##  #######  ########
 """
 
+import logging
 import os
 import re
-import logging
-
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
-from backup.utils import slugify, formatkv
 
 import pymysql as mysql
-
 from phply import phplex
+from phply.phpast import Array, Return
 from phply.phpparse import make_parser
-from phply.phpast import *
+
+from backup.reporter import Reporter, ReporterCheck
+from backup.utils import formatkv, slugify
 
 from .error import SourceError
 
@@ -33,7 +32,7 @@ class HHError(SourceError):
         self.message = message
 
     def __str__(self):
-        return "HHError({!r})".format(self.message)
+        return f"HHError({self.message!r})"
 
 
 class HHNotFoundError(HHError):
@@ -69,9 +68,7 @@ class HH(Reporter, object):
 
         # check preconditions
         if not self.checkConfig():
-            raise HHNotFoundError(
-                self, "no humhub instance found at '{}'".format(self.fspath)
-            )
+            raise HHNotFoundError(self, f"no humhub instance found at '{self.fspath}'")
 
         self.parseConfiguration()
 
@@ -91,7 +88,7 @@ class HH(Reporter, object):
 
         self.queryDatabase()
 
-        self.description = "Humhub '{}'".format(self.title)
+        self.description = f"Humhub '{self.title}'"
         self.slug = slugify(self.title)
 
     def checkConfig(self):
@@ -131,14 +128,14 @@ class HH(Reporter, object):
                 self.title = array_get(r, "name")
                 if not self.title:
                     raise HHConfigError(self, "no title given")
-                logging.debug("HH.parseConfiguration: title={}".format(self.title))
+                logging.debug("HH.parseConfiguration: title=%s", self.title)
                 components = array_get(r, "components")
                 if components:
                     db = array_get(components, "db")
                     if db:
                         dsn = array_get(db, "dsn")
                         if dsn:
-                            logging.debug("HH.parseConfiguration: dsn={}".format(dsn))
+                            logging.debug("HH.parseConfiguration: dsn=%", dsn)
                             m = dns_re.match(dsn)
                             if m:
                                 self.dbhost = m.group(1)
@@ -150,6 +147,12 @@ class HH(Reporter, object):
 
     @ReporterCheck
     def queryDatabase(self):
+        assert self.dbname, "database name not set"
+        assert self.dbhost, "database host not set"
+        assert self.dbuser, "database user not set"
+        assert self.dbpass, "database password not set"
+        assert self.dbprefix, "database prefix not set"
+
         connection = None
         try:
             connection = mysql.connect(
@@ -159,20 +162,25 @@ class HH(Reporter, object):
                 user=self.dbuser,
                 password=self.dbpass,
                 charset=self.dbcharset,
-                use_unicode=True,
             )
             cursor = connection.cursor()
             cursor.execute("SELECT value FROM setting" " WHERE name = 'name'")
-            self.title = cursor.fetchone()[0]
-            logging.debug("HH.queryDatabase: title={}".format(self.title))
+            if row := cursor.fetchone():
+                self.title = row[0]
+            else:
+                raise HHNotFoundError(self, "title not found in setting table")
+            logging.debug("HH.queryDatabase: title=%s", self.title)
             cursor.execute(
                 "SELECT value FROM setting" " WHERE name = 'mailer.systemEmailAddress'"
             )
-            self.email = cursor.fetchone()[0]
-            logging.debug("HH.queryDatabase: email={}".format(self.email))
+            if row := cursor.fetchone():
+                self.email = row[0]
+            else:
+                raise HHNotFoundError(self, "email not found in setting table")
+            logging.debug("HH.queryDatabase: email=%s", self.email)
 
         except mysql.Error as e:
-            raise HHDatabaseError(self, repr(e))
+            raise HHDatabaseError(self, repr(e)) from e
 
         finally:
             if connection:

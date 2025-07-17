@@ -7,18 +7,17 @@ Script to backup a Wordpress Blog instance.
 Try 'python sitebackup.py -h' for usage information.
 """
 
-import sys
-import os
 import argparse
 import functools
 import logging
+import os
+import sys
 
 from backup import Backup
-from backup.source import SourceFactory, SourceErrors
+from backup.source import SourceErrors, SourceFactory
 from backup.target.s3 import S3
 from backup.thinning import ThinningStrategy
-from backup.utils.mail import Mailer, Sender, Recipient
-
+from backup.utils.mail import Mailer, Recipient, Sender
 
 """
     ##     ##    ###    #### ##    ##
@@ -57,7 +56,7 @@ def value_argument(string, callee=None):
         try:
             return callee(string)
         except ValueError as e:
-            raise argparse.ArgumentTypeError(str(e))
+            raise argparse.ArgumentTypeError(str(e)) from e
     raise argparse.ArgumentTypeError("Internal Error")
 
 
@@ -66,9 +65,7 @@ def dir_argument(string):
     to verify the given argument is an existing directory.
     """
     if not os.path.isdir(string):
-        raise argparse.ArgumentTypeError(
-            "{!r} is not an existing directory".format(string)
-        )
+        raise argparse.ArgumentTypeError(f"{string!r} is not an existing directory")
     return string
 
 
@@ -79,7 +76,10 @@ class ArgumentParser(argparse.ArgumentParser):
         """Print human friendly help."""
         import humanfriendly.terminal
 
-        humanfriendly.terminal.usage(self.format_help())
+        if file is None:
+            humanfriendly.terminal.usage(self.format_help())
+        else:
+            super().print_help(file=file)
 
 
 def main(args=None):
@@ -232,10 +232,10 @@ def main(args=None):
             dbprefix=arguments.dbprefix,
         )
     except SourceErrors as exception:
-        logging.error("Site-Backup: {}".format(exception))
+        logging.error(f"Site-Backup: {exception}")
         sys.exit(1)
     else:
-        logging.info("Site-Backup: Source is %s" % (source))
+        logging.info(f"Site-Backup: Source is {source}")
 
     # initialize targets
 
@@ -252,7 +252,7 @@ def main(args=None):
         targets.append(s3target)
 
     for target in targets:
-        logging.info("Site-Backup: Target is %s" % (target))
+        logging.info(f"Site-Backup: Target is {target}")
 
     # initialize options
 
@@ -277,7 +277,7 @@ def main(args=None):
     )
 
     if backup.error:
-        logging.error("Site-Backup: {}".format(backup.error))
+        logging.error(f"Site-Backup: {backup.error}")
         sys.exit(1)
 
 

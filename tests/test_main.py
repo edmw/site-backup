@@ -1,13 +1,13 @@
 # coding: utf-8
 
-import pytest  # noqa: 401
+import pytest
 from mock import mock, patch
 
 from backup.utils.mail import Recipient, Sender
 from sitebackup import main
 
 
-def testHelp():
+def test_help():
     with pytest.raises(SystemExit) as exceptioninfo:
         main(
             [
@@ -26,9 +26,9 @@ def setupSource(mock_class):
 @patch("sitebackup.Mailer")
 @patch("sitebackup.SourceFactory")
 @patch("sitebackup.Backup")
-def testWithNoArguments(patchedBackup, patchedSourceFactory, patchedMailer, *args):
-    mailer = patchedMailer()
-
+def test_with_no_arguments(
+    patchedBackup, patchedSourceFactory, _patchedMailer, _mock_os_isdir
+):
     # Mock SourceFactory and its create method
     source_factory = patchedSourceFactory.return_value
     source = setupSource(mock.Mock)
@@ -64,7 +64,9 @@ def testWithNoArguments(patchedBackup, patchedSourceFactory, patchedMailer, *arg
 @patch("sitebackup.Mailer")
 @patch("sitebackup.SourceFactory")
 @patch("sitebackup.Backup")
-def testWithArguments(patchedBackup, patchedSourceFactory, patchedMailer, *args):
+def test_with_arguments(
+    patchedBackup, patchedSourceFactory, patchedMailer, _mock_os_isdir
+):
     mailer = patchedMailer()
 
     # Mock SourceFactory and its create method
@@ -161,7 +163,9 @@ def testWithArguments(patchedBackup, patchedSourceFactory, patchedMailer, *args)
 @patch("sitebackup.SourceFactory")
 @patch("sitebackup.S3")
 @patch("sitebackup.Backup")
-def testWithS3Arguments(patchedBackup, patchedS3, patchedSourceFactory, *args):
+def test_with_S3_arguments(
+    patchedBackup, patchedS3, patchedSourceFactory, _mock_os_isdir
+):
     # Mock SourceFactory and its create method
     source_factory = patchedSourceFactory.return_value
     source = setupSource(mock.Mock)

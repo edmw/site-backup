@@ -10,21 +10,17 @@
 ##     ## ##     ##  ######  ##     ## ####    ###    ########
 """
 
-import os
-import io
-import time
-import logging
-
-# 8 data types
 import collections
-
-# 13 data compression and archiving
+import io
+import logging
+import os
 import tarfile
+import time
 
 import humanfriendly
 
 from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
-from backup.utils import formatkv, timestamp4now, timestamp2date
+from backup.utils import formatkv, timestamp2date, timestamp4now
 
 
 class ArchiveResult(collections.namedtuple("Result", ["size"])):
@@ -33,7 +29,8 @@ class ArchiveResult(collections.namedtuple("Result", ["size"])):
     __slots__ = ()
 
     def __str__(self):
-        return "Result(size={})".format(humanfriendly.format_size(self.size))
+        size = humanfriendly.format_size(self.size)
+        return f"Result(size={size})"
 
 
 class ArchiveFile(object):
@@ -71,12 +68,12 @@ class Archive(Reporter, object):
 
         self.timestamp = timestamp or timestamp4now()
 
-        self.name = "{}-{}".format(label, self.timestamp)
+        self.name = f"{label}-{self.timestamp}"
         self.path = "."
 
         self.ctime = timestamp2date(self.timestamp)
 
-        self.filename = "{}.tgz".format(self.name)
+        self.filename = f"{self.name}.tgz"
 
         self.tar = None
 
@@ -86,19 +83,19 @@ class Archive(Reporter, object):
 
         m = re.match(r"^(.*)-([^-]+)\.tgz$", filename)
         if not m:
-            raise ValueError("filename '{}' invalid format".format(filename))
+            raise ValueError(f"filename '{filename}' invalid format")
 
         label, timestamp = m.groups()
 
         if check_label and label != check_label:
             raise ValueError(
-                "filename '{}' not matching label '{}'".format(filename, check_label)
+                f"filename '{filename}' not matching label '{check_label}'"
             )
 
         return cls(label, timestamp)
 
     def __repr__(self):
-        return "Archive[name={}, timestamp={}]".format(self.name, self.timestamp)
+        return f"Archive[name={self.name}, timestamp={self.timestamp}]"
 
     def __str__(self):
         return formatkv([("Name", self.name)], title="ARCHIVE")
@@ -117,7 +114,10 @@ class Archive(Reporter, object):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.tar.close()
+        if self.tar:
+            self.tar.close()
+        else:
+            raise RuntimeError("archive not opened")
 
         self.storeResult(
             "createArchive", ArchiveResult(os.path.getsize(self.tarname()))
@@ -128,21 +128,27 @@ class Archive(Reporter, object):
 
     @ReporterCheckResult
     def addArchiveFile(self, archivefile):
-        tarinfo = tarfile.TarInfo(archivefile.name)
-        tarinfo.mtime = archivefile.mtime
-        tarinfo.size = archivefile.size()
-        self.tar.addfile(tarinfo, archivefile.fileobject())
-        return archivefile.name
+        if self.tar:
+            tarinfo = tarfile.TarInfo(archivefile.name)
+            tarinfo.mtime = archivefile.mtime
+            tarinfo.size = archivefile.size()
+            self.tar.addfile(tarinfo, archivefile.fileobject())
+            return archivefile.name
+        else:
+            raise RuntimeError("archive not opened")
 
     @ReporterCheckResult
     def addPath(self, path, name=None):
-        self.tar.add(path, arcname=name)
-        return path
+        if self.tar:
+            self.tar.add(path, arcname=name)
+            return path
+        else:
+            raise RuntimeError("archive not opened")
 
     @ReporterCheck
     def addManifest(self, timestamp):
         f = self.createArchiveFile("MANIFEST")
-        f.writeline("Timestamp: {}".format(timestamp))
+        f.writeline(f"Timestamp: {timestamp}")
         self.addArchiveFile(f)
 
     @ReporterCheckResult

@@ -2,5 +2,10 @@
 
 __version__ = "1.0.0"
 
-from .factory import SourceFactory
 from .error import SourceErrors
+from .factory import SourceFactory
+
+__all__ = [
+    "SourceErrors",
+    "SourceFactory",
+]

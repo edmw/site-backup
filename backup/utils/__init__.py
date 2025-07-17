@@ -3,21 +3,35 @@
 __version__ = "1.0.0"
 
 import re
-
 from datetime import datetime
 
 LF = "\n"
 LFLF = "\n\n"
 SPACE = " "
 SPACER = "    "
+COMMASPACE = ", "
 
-SUPERSCRIPT = dict(zip([ord(char) for char in "0123456789"], "⁰¹²³⁴⁵⁶⁷⁸⁹"))
-FULLWIDTH = dict(zip([ord(char) for char in "0123456789"], "０１２３４５６７８９"))
+SUPERSCRIPT = dict(
+    zip(
+        [ord(char) for char in "0123456789"],
+        "⁰¹²³⁴⁵⁶⁷⁸⁹",
+        strict=True,
+    )
+)
+FULLWIDTH = dict(
+    zip(
+        [ord(char) for char in "0123456789"],
+        "０１２３４５６７８９",
+        strict=True,
+    )
+)
 
 TIMESTAMP_FORMAT = "%Y%m%d%H%M%S"
 
 
-def timestamp4now(now=datetime.now()):
+def timestamp4now(now=None):
+    if now is None:
+        now = datetime.now()
     return now.strftime(TIMESTAMP_FORMAT)
 
 
@@ -64,13 +78,13 @@ def formatkv(kv, title=None):
             if lines:
                 for index, line in enumerate(lines):
                     if index == 0:
-                        a(SPACER + "{}: {}".format(key, line))
+                        a(f"{SPACER}{key}: {line}")
                     else:
-                        a(2 * SPACER + "{}".format(line))
+                        a(f"{SPACER}{SPACER}{line}")
             else:
-                a(SPACER + "{}: None".format(key))
+                a(f"{SPACER}{key}: None")
         else:
-            a(SPACER + "{}: None".format(key))
+            a(f"{SPACER}{key}: None")
 
     return "\n".join(o)
 
@@ -88,12 +102,15 @@ def formatsize(size, binary=False, format="{:.1f}"):
     if bytes == 1:
         return "1 Byte"
     if bytes < base:
-        return "{} Bytes".format(bytes)
+        return f"{bytes} Bytes"
 
-    for i, suffix in enumerate(suffixes):
-        unit = base ** (i + 2)
-        if bytes < unit:
-            s = format.format(base * bytes / unit)
-            return s + " {}".format(suffix)
+    unit = base ** (len(suffixes) + 1)
+    suffix = suffixes[-1]
+    for i, s in enumerate(suffixes):
+        u = base ** (i + 2)
+        if bytes < u:
+            unit = u
+            suffix = s
+            break
     s = format.format(base * bytes / unit)
-    return s + " {}".format(suffix)
+    return f"{s} {suffix}"

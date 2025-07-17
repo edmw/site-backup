@@ -7,7 +7,5 @@ class SourceError(Exception):
 
 class SourceErrors(Exception):
     def __init__(self, message, errors):
-        super(SourceErrors, self).__init__(
-            message + (": {}".format([str(e) for e in errors]))
-        )
+        super(SourceErrors, self).__init__(f"{message}: {[str(e) for e in errors]}")
         self.errors = errors

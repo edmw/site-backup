@@ -18,7 +18,7 @@ import subprocess
 
 import humanfriendly
 
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
+from backup.reporter import Reporter, ReporterCheckResult
 from backup.utils import formatkv
 
 
@@ -28,7 +28,7 @@ class DBError(Exception):
         self.message = message
 
     def __str__(self):
-        return "DBError({!r})".format(self.message)
+        return f"DBError({self.message!r})"
 
 
 class DBAccessDeniedError(DBError):
@@ -41,9 +41,8 @@ class DBResult(collections.namedtuple("Result", ["size", "numberOfTables"])):
     __slots__ = ()
 
     def __str__(self):
-        return "Result(size={}, numberOfTables={})".format(
-            humanfriendly.format_size(self.size), self.numberOfTables
-        )
+        size = humanfriendly.format_size(self.size)
+        return f"Result(size={size}, numberOfTables={self.numberOfTables})"
 
 
 class DB(Reporter, object):
@@ -67,19 +66,19 @@ class DB(Reporter, object):
     def tables(self):
         # get list of tables
         if self.prefix:
-            execute = 'show tables like "{}%%"'.format(self.prefix)
+            execute = f'show tables like "{self.prefix}%%"'
         else:
             execute = "show tables"
         p = subprocess.Popen(
             [
                 "mysql",
                 self.db,
-                "--host={}".format(self.host),
-                "--user={}".format(self.user),
-                "--password={}".format(self.password),
+                f"--host={self.host}",
+                f"--user={self.user}",
+                f"--password={self.password}",
                 "--batch",
                 "--skip-column-names",
-                "--execute={}".format(execute),
+                f"--execute={execute}",
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -89,7 +88,7 @@ class DB(Reporter, object):
         (stdoutdata, stderrdata) = p.communicate()
 
         if not p.returncode == 0:
-            message = "RC={}".format(p.returncode)
+            message = f"RC={p.returncode}"
             if stderrdata:
                 message = str(stderrdata).strip()
                 if stderrdata.startswith("ERROR 1045"):
@@ -107,9 +106,9 @@ class DB(Reporter, object):
         p = subprocess.Popen(
             [
                 "mysqldump",
-                "--host={}".format(self.host),
-                "--user={}".format(self.user),
-                "--password={}".format(self.password),
+                f"--host={self.host}",
+                f"--user={self.user}",
+                f"--password={self.password}",
                 "--opt",
                 self.db,
             ]
@@ -121,12 +120,12 @@ class DB(Reporter, object):
         (stdoutdata, stderrdata) = p.communicate()
 
         if not p.returncode == 0:
-            message = "RC={}".format(p.returncode)
+            message = f"RC={p.returncode}"
             if stderrdata:
                 message = str(stderrdata).strip()
             raise DBError(self, message)
 
-        f = archive.createArchiveFile("{}-db.sql".format(archive.name), binmode=True)
+        f = archive.createArchiveFile(f"{archive.name}-db.sql", binmode=True)
         f.write(stdoutdata)
         archive.addArchiveFile(f)
 

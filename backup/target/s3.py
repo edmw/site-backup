@@ -12,17 +12,23 @@ Transfer a backup archive to a cloud service using the S3 API.
    ##    ##     ## ##     ##  ######   ########    ##                ######   #######
 """
 
+import os
 import socket
 import sys
 import time
 from collections import namedtuple
 
-import boto
-import boto.s3.connection
+import boto3
 import humanfriendly
+from botocore.exceptions import (
+    ClientError,
+    EndpointConnectionError,
+    NoCredentialsError,
+    SSLError,
+)
 
 from backup.archive import Archive
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
+from backup.reporter import Reporter, ReporterCheckResult
 from backup.utils import formatkv
 
 
@@ -35,7 +41,7 @@ class S3Error(Exception):
         self.message = message
 
     def __str__(self):
-        return "S3Error({!r})".format(self.message)
+        return f"S3Error({self.message!r})"
 
 
 class S3Result(namedtuple("Result", ["size", "duration"])):
@@ -44,10 +50,9 @@ class S3Result(namedtuple("Result", ["size", "duration"])):
     __slots__ = ()
 
     def __str__(self):
-        return "Result(size={}, duration={})".format(
-            humanfriendly.format_size(self.size),
-            humanfriendly.format_timespan(self.duration),
-        )
+        size = humanfriendly.format_size(self.size)
+        duration = humanfriendly.format_timespan(self.duration)
+        return f"Result(size={size}, duration={duration})"
 
 
 class S3ThinningResult(
@@ -58,8 +63,8 @@ class S3ThinningResult(
     __slots__ = ()
 
     def __str__(self):
-        return "Result(retained={}, deleted={})".format(
-            self.archivesRetained, self.archivesDeleted
+        return (
+            f"Result(retained={self.archivesRetained}, deleted={self.archivesDeleted})"
         )
 
 
@@ -85,15 +90,21 @@ class S3(Reporter, object):
         self.bucket = bucket
 
         self.label = "S3"
-        self.description = "{} Service at {}".format(self.label, self.host)
+        self.description = f"{self.label} Service at {self.host}"
 
-        self.connection = boto.connect_s3(
+        # Configure endpoint URL for custom S3-compatible services
+        if port:
+            endpoint_url = f"{'https' if is_secure else 'http'}://{host}:{port}"
+        else:
+            endpoint_url = f"{'https' if is_secure else 'http'}://{host}"
+
+        # Initialize boto3 client
+        self.s3_client = boto3.client(
+            "s3",
             aws_access_key_id=self.accesskey,
             aws_secret_access_key=self.secretkey,
-            host=host,
-            port=port,
-            is_secure=is_secure,
-            calling_format=boto.s3.connection.OrdinaryCallingFormat(),
+            endpoint_url=endpoint_url,
+            use_ssl=is_secure,
         )
 
     def __str__(self):
@@ -132,7 +143,7 @@ class S3(Reporter, object):
                 sys.stdout.write("|")
                 sys.stdout.write("\n")
                 seconds = self.boto_progress_duration()
-                sys.stdout.write("{} seconds".format(seconds))
+                sys.stdout.write(f"{seconds} seconds")
                 sys.stdout.write("\n")
             sys.stdout.flush()
 
@@ -140,21 +151,28 @@ class S3(Reporter, object):
         try:
             archives = []
 
-            bucket = self.connection.get_bucket(self.bucket)
-            for key in bucket.list():
-                try:
-                    archive = Archive.fromfilename(key.name, check_label=label)
-                except ValueError as e:
-                    raise S3Error(self, str(e)) from e
+            # List objects in the bucket
+            response = self.s3_client.list_objects_v2(Bucket=self.bucket)
 
-                if archive:
-                    archives.append(archive)
+            if "Contents" in response:
+                for obj in response["Contents"]:
+                    try:
+                        archive = Archive.fromfilename(obj["Key"], check_label=label)
+                    except ValueError as e:
+                        raise S3Error(self, str(e)) from e
+
+                    if archive:
+                        archives.append(archive)
 
             return archives
 
-        except boto.exception.S3ResponseError as e:
+        except ClientError as e:
             raise S3Error(self, repr(e)) from e
-        except boto.exception.BotoServerError as e:
+        except NoCredentialsError as e:
+            raise S3Error(self, repr(e)) from e
+        except EndpointConnectionError as e:
+            raise S3Error(self, repr(e)) from e
+        except SSLError as e:
             raise S3Error(self, repr(e)) from e
         except socket.gaierror as e:
             raise S3Error(self, repr(e)) from e
@@ -171,24 +189,42 @@ class S3(Reporter, object):
         try:
             self.boto_progress_start()
 
-            if self.connection.lookup(self.bucket):
-                bucket = self.connection.get_bucket(self.bucket)
-            else:
-                bucket = self.connection.create_bucket(self.bucket)
+            # Check if bucket exists, create if not
+            try:
+                self.s3_client.head_bucket(Bucket=self.bucket)
+            except ClientError as e:
+                if e.response["Error"]["Code"] == "404":
+                    # Bucket doesn't exist, create it
+                    self.s3_client.create_bucket(Bucket=self.bucket)
+                else:
+                    raise
 
             if not dry:
-                key = bucket.new_key(archive.filename)
-                key.set_contents_from_filename(
-                    archive.filename, cb=self.boto_progress, num_cb=10
-                )
-                return S3Result(key.size, self.boto_progress_duration())
+                # Upload the file with progress callback
+                file_size = os.path.getsize(archive.filename)
 
+                def progress_callback(bytes_transferred):
+                    self.boto_progress(bytes_transferred, file_size)
+
+                self.s3_client.upload_file(
+                    archive.filename,
+                    self.bucket,
+                    archive.filename,
+                    Callback=progress_callback,
+                )
+
+                self.progress_etime = time.monotonic()
+                return S3Result(file_size, self.boto_progress_duration())
             else:
                 return S3Result(0, 0)
 
-        except boto.exception.S3ResponseError as e:
+        except ClientError as e:
             raise S3Error(self, repr(e)) from e
-        except boto.exception.BotoServerError as e:
+        except NoCredentialsError as e:
+            raise S3Error(self, repr(e)) from e
+        except EndpointConnectionError as e:
+            raise S3Error(self, repr(e)) from e
+        except SSLError as e:
             raise S3Error(self, repr(e)) from e
         except socket.gaierror as e:
             raise S3Error(self, repr(e)) from e
@@ -207,19 +243,22 @@ class S3(Reporter, object):
 
             toRetain, toDelete = thinArchives(archives)
 
-            bucket = self.connection.get_bucket(self.bucket)
-
             if not dry:
                 for archive in toDelete:
-                    bucket.delete_key(archive.filename)
+                    self.s3_client.delete_object(
+                        Bucket=self.bucket, Key=archive.filename
+                    )
                 return S3ThinningResult(len(toRetain), len(toDelete))
-
             else:
                 return S3ThinningResult(len(toRetain), len(toDelete))
 
-        except boto.exception.S3ResponseError as e:
+        except ClientError as e:
             raise S3Error(self, repr(e)) from e
-        except boto.exception.BotoServerError as e:
+        except NoCredentialsError as e:
+            raise S3Error(self, repr(e)) from e
+        except EndpointConnectionError as e:
+            raise S3Error(self, repr(e)) from e
+        except SSLError as e:
             raise S3Error(self, repr(e)) from e
         except socket.gaierror as e:
             raise S3Error(self, repr(e)) from e

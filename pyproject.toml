@@ -3,9 +3,9 @@ name = "site-backup"
 version = "1.0.0"
 description = "A tool to create backups of WordPress and HumHub instances"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
-    "boto",
+    "boto3",
     "coloredlogs",
     "python-dateutil",
     "humanfriendly",
@@ -35,19 +35,18 @@ dev-dependencies = [
     "flake8-string-format",
     "black>=25.1.0",
     "requests",
+    "flake8-unused-arguments>=0.0.13",
+    "flake8-bugbear>=24.12.12",
 ]
 
 [tool.pytest.ini_options]
 markers = [
-    "integration: marks tests as integration tests (may require external services)",
     "unit: marks tests as unit tests",
-    "slow: marks tests as slow-running tests",
+    "integration: marks tests as integration tests (may require external services)",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short"
-# By default, skip integration and slow tests
+python_classes = ["Test*"]
+addopts = "-v --tb=short -m 'not integration'"
 # Use: uv run pytest -m integration  to run integration tests
-# Use: uv run pytest -m "not integration and not slow"  to run only fast unit tests

@@ -1,17 +1,15 @@
 # coding: utf-8
 
 import subprocess
-
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from email.mime.text import MIMEText
+from collections import namedtuple
 from email.header import Header
-from email.utils import COMMASPACE, formatdate
-
-from backup.utils import LF, SPACER
-
-
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formatdate
 from enum import IntEnum
+
+from backup.utils import COMMASPACE, LF, SPACER
 
 
 class Priority(IntEnum):
@@ -20,9 +18,6 @@ class Priority(IntEnum):
     NORMAL = 3
     LOW = 4
     LOWEST = 5
-
-
-from collections import namedtuple
 
 
 class Attachment(namedtuple("Attachment", ["name", "mimetype", "data"])):
@@ -41,14 +36,12 @@ def sendMail(send_to, send_from, subject, text, attachments, priority=Priority.N
                 part = MIMEApplication(attachment.data, "pdf", Name=attachment.name)
             else:
                 part = MIMEApplication(attachment.data, Name=attachment.name)
-            part["Content-Disposition"] = 'attachment; filename="{}"'.format(
-                attachment.name
-            )
+            part["Content-Disposition"] = f'attachment; filename="{attachment.name}"'
             mail.attach(part)
     else:
         mail = MIMEText(text.encode("utf-8"), "plain", "utf-8")
 
-    mail["Subject"] = Header(subject, "utf-8")
+    mail["Subject"] = str(Header(subject, "utf-8"))
     mail["To"] = COMMASPACE.join(send_to)
     mail["From"] = send_from
     mail["Date"] = formatdate(localtime=True)
@@ -73,7 +66,7 @@ class MailerError(Exception):
         self.message = message
 
     def __str__(self):
-        return "MailerError({!r})".format(self.message)
+        return f"MailerError({self.message!r})"
 
 
 class Mailer(object):

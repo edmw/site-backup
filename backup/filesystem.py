@@ -10,11 +10,11 @@
 ##       #### ######## ########  ######     ##     ######     ##    ######## ##     ##
 """
 
-import os
 import logging
+import os
 
+from backup.reporter import Reporter, ReporterCheck
 from backup.utils import formatkv
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
 
 
 class FSError(Exception):
@@ -23,7 +23,7 @@ class FSError(Exception):
         self.message = message
 
     def __str__(self):
-        return "FSError({!r})".format(self.message)
+        return f"FSError({self.message!r})"
 
 
 class FSNotFoundError(FSError):
@@ -37,7 +37,7 @@ class FS(Reporter, object):
         self.path = path
 
         if not os.path.exists(self.path):
-            raise FSNotFoundError(self, "path '{}' not found".format(self.path))
+            raise FSNotFoundError(self, f"path '{self.path}' not found")
 
     def __str__(self):
         return formatkv(
@@ -49,5 +49,5 @@ class FS(Reporter, object):
 
     @ReporterCheck
     def addToArchive(self, archive):
-        logging.debug("add path '{}' to archive '{}'".format(self.path, archive.name))
+        logging.debug("add path '%s' to archive '%s'", self.path, archive.name)
         archive.addPath(self.path, name=archive.name)

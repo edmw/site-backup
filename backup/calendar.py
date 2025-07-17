@@ -11,18 +11,16 @@
 """
 
 import calendar
-
-from operator import attrgetter
 from collections import Counter
-
 from datetime import date
-
-from backup.utils import LF
+from operator import attrgetter
 
 
 class Calendar(calendar.HTMLCalendar):
 
-    def __init__(self, archives, today=date.today()):
+    def __init__(self, archives, today=None):
+        if today is None:
+            today = date.today()
         super(Calendar, self).__init__()
         self.archives = sorted(archives, key=attrgetter("ctime"))
         self.first_archive = next(iter(self.archives), None)

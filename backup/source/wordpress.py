@@ -13,10 +13,10 @@
 import os
 import re
 
-from backup.reporter import Reporter, ReporterCheck, ReporterCheckResult
-from backup.utils import slugify, formatkv
-
 import pymysql as mysql
+
+from backup.reporter import Reporter, ReporterCheck
+from backup.utils import formatkv, slugify
 
 from .error import SourceError
 
@@ -28,7 +28,7 @@ class WPError(SourceError):
         self.message = message
 
     def __str__(self):
-        return "WPError({!r})".format(self.message)
+        return f"WPError({self.message!r})"
 
 
 class WPNotFoundError(WPError):
@@ -63,7 +63,7 @@ class WP(Reporter, object):
         # check preconditions
         if not self.checkConfig():
             raise WPNotFoundError(
-                self, "no wordpress instance found at '{}'".format(self.fspath)
+                self, f"no wordpress instance found at '{self.fspath}'"
             )
 
         self.parseConfiguration()
@@ -84,7 +84,7 @@ class WP(Reporter, object):
 
         self.queryDatabase()
 
-        self.description = "Wordpress Blog '{}'".format(self.title)
+        self.description = f"Wordpress Blog '{self.title}'"
         self.slug = slugify(self.title)
 
     def checkConfig(self):
@@ -155,15 +155,21 @@ class WP(Reporter, object):
         # regular expression for hostname with optional port
         re_hostname = r"^(?P<host>[^:]+):?(?P<port>[0-9]*)$"
 
-        m = re.search(re_hostname, self.dbhost)
-        if m:
-            host = m.group("host")
-            port = m.group("port")
-            self.dbhost = host
-            self.dbport = int(port) if port else self.dbport
+        if self.dbhost:
+            if m := re.search(re_hostname, self.dbhost):
+                host = m.group("host")
+                port = m.group("port")
+                self.dbhost = host
+                self.dbport = int(port) if port else self.dbport
 
     @ReporterCheck
     def queryDatabase(self):
+        assert self.dbname, "database name not set"
+        assert self.dbhost, "database host not set"
+        assert self.dbuser, "database user not set"
+        assert self.dbpass, "database password not set"
+        assert self.dbprefix, "database prefix not set"
+
         connection = None
         try:
             connection = mysql.connect(
@@ -173,22 +179,27 @@ class WP(Reporter, object):
                 user=self.dbuser,
                 password=self.dbpass,
                 charset=self.dbcharset,
-                use_unicode=True,
             )
             cursor = connection.cursor()
             cursor.execute(
-                "SELECT option_value FROM {}options"
-                " WHERE option_name = 'blogname'".format(self.dbprefix)
+                f"SELECT option_value FROM {self.dbprefix}options"
+                f" WHERE option_name = 'blogname'"
             )
-            self.title = cursor.fetchone()[0]
+            if row := cursor.fetchone():
+                self.title = row[0]
+            else:
+                raise WPNotFoundError(self, "blogname not found in options table")
             cursor.execute(
-                "SELECT option_value FROM {}options"
-                " WHERE option_name = 'admin_email'".format(self.dbprefix)
+                f"SELECT option_value FROM {self.dbprefix}options"
+                f" WHERE option_name = 'admin_email'"
             )
-            self.email = cursor.fetchone()[0]
+            if row := cursor.fetchone():
+                self.email = row[0]
+            else:
+                raise WPNotFoundError(self, "email not found in options table")
 
         except mysql.Error as e:
-            raise WPDatabaseError(self, repr(e))
+            raise WPDatabaseError(self, repr(e)) from e
 
         finally:
             if connection:

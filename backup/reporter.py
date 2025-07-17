@@ -21,9 +21,8 @@ Then call object.reportResults() any time to generate a report.
 """
 
 import re
-
-from functools import wraps
 from collections import OrderedDict
+from functools import wraps
 
 from backup.utils import formatkv
 
@@ -69,17 +68,17 @@ class Reporter(object):
             self.results[fname] = result
 
     def reportParameters(self):
-        """Report parameters as fomatted string of key and value pairs."""
+        """Report parameters as formatted string of key and value pairs."""
         kv = []
         for fname, parameters in self.parameters.items():
             if type(parameters) is list:
                 for name, value in parameters:
-                    kv.append(("{}({})".format(fname, name), value))
+                    kv.append((f"{fname}({name})", value))
             elif type(parameters) is tuple:
                 name, value = parameters
-                kv.append(("{}({})".format(fname, name), value))
+                kv.append((f"{fname}({name})", value))
             else:
-                kv.append(fname, parameters)
+                kv.append((fname, parameters))
         return formatkv(kv)
 
     def reportResults(self):

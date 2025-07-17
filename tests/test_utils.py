@@ -1,11 +1,9 @@
 # coding: utf-8
 
-import pytest  # noqa: 401
-
 from backup.utils import formatsize, slugify, timestamp2date, timestamp4now
 
 
-def testTimestamp():
+def test_timestamp():
     from datetime import datetime
 
     now = datetime.now().replace(microsecond=0)
@@ -13,7 +11,7 @@ def testTimestamp():
     assert timestamp2date(timestamp) == now
 
 
-def testSlugify():
+def test_slugify():
     assert slugify(None) is None
     assert slugify("") == ""
     assert slugify("This") == "this"
@@ -25,7 +23,7 @@ def testSlugify():
     assert slugify("-- Hear my heart burst again") == "-hear-my-heart-burst-again"
 
 
-def testFormatSize():
+def test_format_size():
     assert formatsize(123) == "123.0 Bytes"
     assert formatsize(123123) == "123.1 kB"
     assert formatsize(123123123) == "123.1 MB"
@@ -38,7 +36,7 @@ def testFormatSize():
     assert formatsize(123123123123123123123123123123) == "123123.1 YB"
 
 
-def testFormatSizeBinary():
+def test_format_size_binary():
     assert formatsize(123, binary=True) == "123.0 Bytes"
     assert formatsize(123123, binary=True) == "120.2 KiB"
     assert formatsize(123123123, binary=True) == "117.4 MiB"
