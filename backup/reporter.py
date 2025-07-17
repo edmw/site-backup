@@ -23,6 +23,7 @@ Then call object.reportResults() any time to generate a report.
 import re
 from collections import OrderedDict
 from functools import wraps
+from typing import Any, Callable
 
 from backup.utils import formatkv
 
@@ -33,11 +34,11 @@ re_camel = re.compile(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))")
 class Reporter(object):
     """Mixin to store and report success and failure of function calls."""
 
-    def __init__(self):
-        self.parameters = OrderedDict()
-        self.results = OrderedDict()
+    def __init__(self) -> None:
+        self.parameters: OrderedDict[str, Any] = OrderedDict()
+        self.results: OrderedDict[str, Any] = OrderedDict()
 
-    def storeParameter(self, fname, name, value):
+    def storeParameter(self, fname: str, name: str, value: Any) -> None:
         """Store parameter and value for the given function.
 
         For consecutive calls with the same function name
@@ -52,7 +53,7 @@ class Reporter(object):
         else:
             self.parameters[fname] = (name, value)
 
-    def storeResult(self, fname, result):
+    def storeResult(self, fname: str, result: Any) -> None:
         """Store result for the given function.
 
         For consecutive calls with the same function name
@@ -67,7 +68,7 @@ class Reporter(object):
         else:
             self.results[fname] = result
 
-    def reportParameters(self):
+    def reportParameters(self) -> str:
         """Report parameters as formatted string of key and value pairs."""
         kv = []
         for fname, parameters in self.parameters.items():
@@ -81,18 +82,18 @@ class Reporter(object):
                 kv.append((fname, parameters))
         return formatkv(kv)
 
-    def reportResults(self):
+    def reportResults(self) -> str:
         """Report results as fomatted string of key and value pairs."""
         kv = self.results.items()
         return formatkv(kv)
 
 
-def ReporterInspect(name):
+def ReporterInspect(name: str) -> Callable[[Callable], Callable]:
     """This decorator for a function will store a specified
     argument value for the given argument name.
     """
 
-    def wrap(function):
+    def wrap(function: Callable) -> Callable:
         @wraps(function)
         def checkedFunction(self, *args, **kwargs):
             if name in kwargs:
@@ -104,7 +105,7 @@ def ReporterInspect(name):
     return wrap
 
 
-def ReporterCheck(function):
+def ReporterCheck(function: Callable) -> Callable:
     """This decorator for a function will store a success result
     if no exception is thrown while executing the function.
     """
@@ -121,7 +122,7 @@ def ReporterCheck(function):
     return checkedFunction
 
 
-def ReporterCheckResult(function):
+def ReporterCheckResult(function: Callable) -> Callable:
     """This decorator will store the result of the function call
     if no exception is thrown while executing the function.
     """

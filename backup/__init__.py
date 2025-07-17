@@ -7,6 +7,7 @@ __version__ = "1.0.0"
 
 import functools
 import time
+from typing import Any
 
 import humanfriendly
 
@@ -17,7 +18,7 @@ from backup.filesystem import FS, FSError
 from backup.reporter import Reporter, ReporterInspect
 from backup.target.s3 import S3Error
 from backup.utils import LF, LFLF, formatkv
-from backup.utils.mail import Attachment, Priority
+from backup.utils.mail import Attachment, Mailer, Priority
 
 """
     ########     ###     ######  ##    ## ##     ## ########
@@ -39,7 +40,12 @@ class Backup(Reporter, object):
 
     """
 
-    def __init__(self, source, mailer=None, quiet=False):
+    def __init__(
+        self,
+        source: Any,
+        mailer: Mailer | None = None,
+        quiet: bool = False,
+    ) -> None:  # TODO: Type source when base interface exists
         super(Backup, self).__init__()
         self.source = source
         self.mailer = mailer
@@ -48,7 +54,7 @@ class Backup(Reporter, object):
         self.etime = 0
         self.error = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return formatkv(
             [
                 (
@@ -61,12 +67,12 @@ class Backup(Reporter, object):
             title="SITEBACKUP",
         )
 
-    def message(self, text):
+    def message(self, text: str) -> None:
         """Prints a message if not told to be quiet."""
         if not self.quiet:
             print(text)
 
-    def backupDatabase(self, archive):
+    def backupDatabase(self, archive: Archive) -> DB:
         """Creates a database backup and stores it into the archive."""
         self.message(f"Processing database of {self.source.description}")
 
@@ -80,7 +86,7 @@ class Backup(Reporter, object):
         db.dumpToArchive(archive)
         return db
 
-    def backupFilesystem(self, archive):
+    def backupFilesystem(self, archive: Archive) -> FS:
         """Creates filesystem backup and stores it into the archive."""
         self.message(f"Processing filesystem of {self.source.description}")
 
@@ -88,7 +94,12 @@ class Backup(Reporter, object):
         fs.addToArchive(archive)
         return fs
 
-    def sendReport(self, reporters, mailer, attachments=None):
+    def sendReport(
+        self,
+        reporters: list[Any],
+        mailer: Mailer,
+        attachments: list[Attachment] | None = None,
+    ) -> None:  # TODO: Type reporters when base interface exists
         """Sends a report with the results of the archive creation."""
 
         reports = []

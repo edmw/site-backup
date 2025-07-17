@@ -12,6 +12,7 @@ import functools
 import logging
 import os
 import sys
+from typing import Any, Callable
 
 from backup import Backup
 from backup.source import SourceErrors, SourceFactory
@@ -48,7 +49,7 @@ by specifing the correspondent command line options.
 """
 
 
-def value_argument(string, callee=None):
+def value_argument(string: str, callee: Callable[[str], Any] | None = None) -> Any:
     """Helper for argparse
     to create a value from the given argument using the given function.
     """
@@ -60,7 +61,7 @@ def value_argument(string, callee=None):
     raise argparse.ArgumentTypeError("Internal Error")
 
 
-def dir_argument(string):
+def dir_argument(string: str) -> str:
     """Helper for argparse
     to verify the given argument is an existing directory.
     """
@@ -72,7 +73,7 @@ def dir_argument(string):
 class ArgumentParser(argparse.ArgumentParser):
     """ArgumentParser with human friendly help."""
 
-    def print_help(self, file=None):
+    def print_help(self, file: Any = None) -> None:
         """Print human friendly help."""
         import humanfriendly.terminal
 
@@ -82,7 +83,7 @@ class ArgumentParser(argparse.ArgumentParser):
             super().print_help(file=file)
 
 
-def main(args=None):
+def main(args: list[str] | None = None) -> None:
     """Main: parse arguments and run."""
 
     parser = ArgumentParser(

@@ -18,11 +18,11 @@ from backup.utils import formatkv
 
 
 class FSError(Exception):
-    def __init__(self, fs, message):
+    def __init__(self, fs: "FS", message: str) -> None:
         self.fs = fs
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"FSError({self.message!r})"
 
 
@@ -31,7 +31,7 @@ class FSNotFoundError(FSError):
 
 
 class FS(Reporter, object):
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         super(FS, self).__init__()
 
         self.path = path
@@ -39,7 +39,7 @@ class FS(Reporter, object):
         if not os.path.exists(self.path):
             raise FSNotFoundError(self, f"path '{self.path}' not found")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return formatkv(
             [
                 ("FS", self.path),

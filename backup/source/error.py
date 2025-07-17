@@ -6,6 +6,6 @@ class SourceError(Exception):
 
 
 class SourceErrors(Exception):
-    def __init__(self, message, errors):
+    def __init__(self, message: str, errors: list[Exception]) -> None:
         super(SourceErrors, self).__init__(f"{message}: {[str(e) for e in errors]}")
         self.errors = errors

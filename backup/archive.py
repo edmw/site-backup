@@ -34,7 +34,7 @@ class ArchiveResult(collections.namedtuple("Result", ["size"])):
 
 
 class ArchiveFile(object):
-    def __init__(self, name, binmode=False):
+    def __init__(self, name: str, binmode: bool = False) -> None:
         super(ArchiveFile, self).__init__()
 
         self.name = name
@@ -46,14 +46,20 @@ class ArchiveFile(object):
 
         self.handle = io.BytesIO()
 
-    def write(self, data):
-        self.handle.write(data if self.binmode else data.encode())
+    def write(self, data: str | bytes) -> None:
+        if isinstance(data, str):
+            self.handle.write(data.encode() if not self.binmode else data.encode())
+        else:
+            self.handle.write(data)
 
-    def writeline(self, data):
-        self.handle.write(data if self.binmode else data.encode())
+    def writeline(self, data: str | bytes) -> None:
+        if isinstance(data, str):
+            self.handle.write(data.encode() if not self.binmode else data.encode())
+        else:
+            self.handle.write(data)
         self.handle.write(b"\n")
 
-    def size(self):
+    def size(self) -> int:
         self.handle.seek(0, os.SEEK_END)
         return self.handle.tell()
 

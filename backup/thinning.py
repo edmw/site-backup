@@ -24,10 +24,13 @@ class SupportsLessThan(Protocol):
     def __lt__(self, other: object) -> bool: ...
 
 
+DateLike = datetime | SupportsLessThan
+
+
 class ThinningStrategy(ABC):
 
     @classmethod
-    def fromArgument(cls, string):
+    def fromArgument(cls, string: str) -> "ThinningStrategy":
         # strategy: latest
         # string contains number of latest backups to keep
         match = re.match(r"L([1-9]\d*)|.*", string)
@@ -51,8 +54,11 @@ class ThinningStrategy(ABC):
 
     @abstractmethod
     def __execute__(
-        self, dates: list[datetime | SupportsLessThan], attr=None, fix=None
-    ):
+        self,
+        dates: list[DateLike],
+        attr: str | None = None,
+        fix: datetime | None = None,
+    ) -> tuple[set[DateLike], set[DateLike]]:
         raise NotImplementedError
 
     """ Thinout the given set of dates.
@@ -65,8 +71,11 @@ class ThinningStrategy(ABC):
     """
 
     def executeOn(
-        self, dates: Iterable[datetime | SupportsLessThan], attr=None, fix=None
-    ):
+        self,
+        dates: Iterable[DateLike],
+        attr: str | None = None,
+        fix: datetime | None = None,
+    ) -> tuple[set[DateLike], set[DateLike]]:
         if fix is None:
             fix = datetime.now()
         dates = sorted(dates) if attr is None else sorted(dates, key=attrgetter(attr))
@@ -86,8 +95,11 @@ class LatestStrategy(ThinningStrategy):
 
     @override
     def __execute__(
-        self, dates: list[datetime | SupportsLessThan], attr=None, fix=None
-    ):
+        self,
+        dates: list[DateLike],
+        attr: str | None = None,
+        fix: datetime | None = None,
+    ) -> tuple[set[DateLike], set[DateLike]]:
         assert isinstance(dates, list)
 
         logging.info("THINNING BY LATEST %d", self.number)
@@ -118,8 +130,8 @@ class ThinOutStrategy(ThinningStrategy):
 
     @override
     def __execute__(
-        self, dates: list[datetime | SupportsLessThan], attr=None, fix=None
-    ):
+        self, dates: list[DateLike], attr=None, fix=None
+    ) -> tuple[set[DateLike], set[DateLike]]:
         assert isinstance(dates, list)
         assert fix is not None
 
@@ -228,7 +240,7 @@ class ThinOutStrategy(ThinningStrategy):
         year_end = fix_month - relativedelta(months=self.months)
         year_start = year_end - relativedelta(years=1)
         last_date = tail(dates)
-        while last_date and year_end >= last_date:
+        while last_date and last_date < year_end:
             logging.info("YEAR %s - %s", year_start.date(), year_end.date())
 
             in_dates, out_dates = map(

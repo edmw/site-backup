@@ -24,14 +24,21 @@ class Attachment(namedtuple("Attachment", ["name", "mimetype", "data"])):
     __slots__ = ()
 
 
-def sendMail(send_to, send_from, subject, text, attachments, priority=Priority.NORMAL):
+def sendMail(
+    send_to: list[str],
+    send_from: str,
+    subject: str,
+    text: str,
+    attachments: list[Attachment] | None,
+    priority: Priority = Priority.NORMAL,
+) -> None:
     if attachments:
         mail = MIMEMultipart()
-        part = MIMEText(text.encode("utf-8"), "plain", "utf-8")
+        part = MIMEText(text, "plain", "utf-8")
         mail.attach(part)
         for attachment in attachments:
             if attachment.mimetype == "text/html":
-                part = MIMEText(attachment.data.encode("utf-8"), "html", "utf-8")
+                part = MIMEText(attachment.data, "html", "utf-8")
             elif attachment.mimetype == "application/pdf":
                 part = MIMEApplication(attachment.data, "pdf", Name=attachment.name)
             else:
@@ -39,7 +46,7 @@ def sendMail(send_to, send_from, subject, text, attachments, priority=Priority.N
             part["Content-Disposition"] = f'attachment; filename="{attachment.name}"'
             mail.attach(part)
     else:
-        mail = MIMEText(text.encode("utf-8"), "plain", "utf-8")
+        mail = MIMEText(text, "plain", "utf-8")
 
     mail["Subject"] = str(Header(subject, "utf-8"))
     mail["To"] = COMMASPACE.join(send_to)

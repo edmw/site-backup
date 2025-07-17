@@ -23,11 +23,11 @@ from backup.utils import formatkv
 
 
 class DBError(Exception):
-    def __init__(self, db, message):
+    def __init__(self, db: "DB", message: str) -> None:
         self.db = db
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"DBError({self.message!r})"
 
 
@@ -46,7 +46,9 @@ class DBResult(collections.namedtuple("Result", ["size", "numberOfTables"])):
 
 
 class DB(Reporter, object):
-    def __init__(self, db, host, user, password, prefix):
+    def __init__(
+        self, db: str, host: str, user: str, password: str, prefix: str
+    ) -> None:
         super(DB, self).__init__()
 
         self.db = db
