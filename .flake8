@@ -1,10 +1,12 @@
 [flake8]
 ignore = W503,E203,E266,U101,B907,E704
 max-line-length = 100
-exclude = .git,.venv,.vscode
+exclude = .git,.venv,.vscode,__pycache__,htmlcov,.pytest_cache
 per-file-ignores =
     # F401: imported but unused
     __init__.py:F401
+    # F401,F811: test files can have unused imports and redefined names
+    tests/*:F401,F811
 # flake8-annotations
 mypy-init-return = true
 allow-star-arg-any = true

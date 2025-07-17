@@ -1,5 +1,11 @@
-Usage
------
+# Site Backup Tool
+
+[![Python Version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
+
+A tool to create backups of WordPress and HumHub instances.
+
+## Usage
 
 ```Text
 This script creates a backup of Wordpress or Humhub instances.
@@ -57,7 +63,7 @@ The database parameters from the configuration file can be overwritten
 by specifing the correspondent command line options.
 ```
 
-Requirements
+## Requirements
 ------------
 
   * Python 3.8+
@@ -67,7 +73,7 @@ Requirements
   * humanfriendly (MIT) - https://github.com/xolox/python-humanfriendly
   * coloredlogs (MIT) - https://github.com/xolox/python-coloredlogs
 
-Development Setup
+## Development Setup
 -----------------
 
 This project uses [uv](https://astral.sh/uv) for dependency management. 
@@ -106,9 +112,23 @@ uv sync
 # Run tests
 uv run pytest
 
+# Run tests with coverage
+uv run pytest --cov=backup --cov=sitebackup
+
+# Generate coverage report
+uv run pytest && open htmlcov/index.html
+
+# Run only unit tests
+uv run pytest -m unit
+
+# Run only integration tests  
+uv run pytest -m integration
+
 # Run linting
 uv run flake8 .
-uv run pylint backup/
+
+# Format code
+uv run black backup/ sitebackup.py tests/
 
 # Add new dependencies
 uv add <package-name>
@@ -116,3 +136,47 @@ uv add <package-name>
 # Add development dependencies  
 uv add --dev <package-name>
 ```
+
+**Using Makefile targets:**
+```bash
+# Show all available targets
+make help
+
+# Common development tasks
+make install       # Install dependencies
+make test          # Run tests with coverage
+make lint          # Run linting
+make format        # Format code
+make check         # Run all quality checks
+make clean         # Clean generated files
+```
+
+### Testing and Coverage
+
+This project uses pytest for testing and pytest-cov for coverage reporting.
+
+**Running Tests:**
+```bash
+# Run all tests (excludes integration tests by default)
+uv run pytest
+
+# Run with coverage reporting
+uv run pytest --cov=backup --cov=sitebackup --cov-report=html
+
+# Or use make commands
+make test          # Run tests with coverage
+make test-cov-html # Run tests and open HTML coverage report
+make cov-report    # Show coverage summary
+```
+
+**Coverage Configuration:**
+- Coverage settings are configured in `pyproject.toml`
+- HTML reports are generated in `htmlcov/`
+- XML reports for CI are generated as `coverage.xml`
+- Use `make` targets for convenient testing and coverage reporting
+
+**Test Organization:**
+- `tests/` - All test files
+- Tests are marked as either `unit` or `integration`
+- Integration tests require external services and are skipped by default
+- Use `pytest -m integration` to run integration tests specifically

@@ -6,6 +6,12 @@ __pycache__
 # uv
 uv.lock
 
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+.coverage.*
+
 # VIM
 *.bak
 

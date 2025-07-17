@@ -28,8 +28,9 @@ packages = ["backup"]
 dev-dependencies = [
     "pytest",
     "pytest-logging",
+    "pytest-cov",
+    "coverage[toml]",
     "mock",
-    "pylint",
     "flake8",
     "flake8-pep3101",
     "flake8-string-format",
@@ -48,5 +49,24 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 python_classes = ["Test*"]
-addopts = "-v --tb=short -m 'not integration'"
+addopts = "-v --tb=short -m 'not integration' --cov=backup --cov=sitebackup --cov-report=term-missing --cov-report=html --cov-report=xml"
 # Use: uv run pytest -m integration  to run integration tests
+
+[tool.coverage.run]
+source = ["backup", "sitebackup"]
+omit = [
+    "tests/*",
+    "*/tests/*",
+    "*/__pycache__/*",
+    "venv/*",
+    ".venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
