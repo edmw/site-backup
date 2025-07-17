@@ -16,7 +16,7 @@ help:
 	@echo "  cov-html       - Generate HTML coverage report"
 	@echo "  cov-xml        - Generate XML coverage report (for CI)"
 	@echo "  clean-cov      - Clean coverage files"
-	@echo "  lint           - Run flake8 linting"
+	@echo "  lint           - Run ruff linting"
 	@echo "  format         - Format code with black"
 	@echo "  check          - Run all quality checks (lint + test)"
 	@echo "  clean          - Clean all generated files"
@@ -65,7 +65,7 @@ clean-cov:
 
 # Run linting
 lint:
-	uv run flake8 backup/ sitebackup.py tests/
+	uv run ruff check backup/ sitebackup.py tests/
 
 # Format code
 format:

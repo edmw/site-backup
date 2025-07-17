@@ -31,13 +31,9 @@ dev-dependencies = [
     "pytest-cov",
     "coverage[toml]",
     "mock",
-    "flake8",
-    "flake8-pep3101",
-    "flake8-string-format",
+    "ruff",
     "black>=25.1.0",
     "requests",
-    "flake8-unused-arguments>=0.0.13",
-    "flake8-bugbear>=24.12.12",
 ]
 
 [tool.pytest.ini_options]
@@ -70,3 +66,54 @@ exclude_lines = [
 
 [tool.coverage.html]
 directory = "htmlcov"
+
+[tool.ruff]
+# Same line length as before
+line-length = 100
+
+# Python version
+target-version = "py312"
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".venv",
+    ".vscode",
+    "__pycache__",
+    "htmlcov",
+    ".pytest_cache",
+]
+
+[tool.ruff.lint]
+# Enable rules equivalent to the flake8 setup
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # pyflakes
+    "C90", # mccabe complexity
+    "UP",  # pyupgrade compatibility
+    "I",   # import errors
+    "N",   # naming conventions
+    "U",   # unused imports
+    "B",   # bugbear compatibility
+#    "D",   # docstring conventions
+]
+
+# Ignore rules to maintain compatibility with existing code
+ignore = [
+    "E203",  # whitespace before ':'
+    "E266",  # too many leading '#' for block comment
+]
+
+# Per-file ignores
+[tool.ruff.lint.per-file-ignores]
+# F401: imported but unused
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.mccabe]
+# Same complexity as flake8 default
+max-complexity = 10
+
+[tool.ruff.lint.isort]
+# Configure isort behavior
+known-first-party = ["backup", "sitebackup"]
