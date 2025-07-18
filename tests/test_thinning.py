@@ -122,13 +122,13 @@ def test_thinning_latest():
     assert len(indates) == 17
     assert len(outdates) == len(dates) - 17
     min_indate = min(indates)
-    assert all(outdate < min_indate for outdate in outdates)
+    assert all(outdate < min_indate for outdate in outdates)  # type: ignore
     (indates, outdates) = LatestStrategy(17171717).execute_on(dates)
     assert_thinning_on(dates, indates, outdates)
     assert len(indates) == len(dates)
     assert len(outdates) == 0
     min_indate = min(indates)
-    assert all(outdate < min_indate for outdate in outdates)
+    assert all(outdate < min_indate for outdate in outdates)  # type: ignore
 
 
 def test_thin_out():

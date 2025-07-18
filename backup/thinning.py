@@ -23,6 +23,7 @@ class SupportsLessThan(Protocol):
     def __lt__(self, other: object) -> bool: ...
 
 
+# TODO: needs refactoring
 DateLike = datetime | SupportsLessThan
 
 
