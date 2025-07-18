@@ -173,8 +173,9 @@ class ThinOutStrategy(ThinningStrategy):
                 in_dates.append(in_date)
                 out_dates = dates_in_span[:-1]
             for in_date in in_dates:
-                logging.info("IN:  %r", in_date)
-            logging.info("OUT: #%d", len(out_dates))
+                logging.info("KEEP: %r", in_date)
+            for out_date in out_dates:
+                logging.info("DROP: %r", out_date)
             return in_dates, out_dates
 
         in_dates = []
@@ -185,68 +186,69 @@ class ThinOutStrategy(ThinningStrategy):
             in_dates.append(dates.pop(0))
         # keep all dates which are newer than the fix date
         in_dates = in_dates + [d for d in dates if date_is_after(d, fix)]
-        logging.info("FUTURE AND LATEST")
+        logging.info("BEGIN FUTURE AND LATEST")
         for date in in_dates:
-            logging.info("IN:  %r", date)
+            logging.info("KEEP: %r", date)
+        logging.info("END FUTURE AND LATEST")
 
         # next, keep one date per day for self.days
         for d in range(0, self.days):
             day = fix - timedelta(days=d + 1)
-            logging.info("DAY %s", day.date())
-
+            logging.info("BEGIN DAY %s", day.date())
             day_dates = [d for d in dates if date_is_same_day(d, day)]
             if len(day_dates):
                 in_date = day_dates[-1]
                 in_dates.append(in_date)
-                logging.info("IN:  {%r}", in_date)
+                logging.info("KEEP: %r", in_date)
                 other_dates = day_dates[:-1]
                 for out_date in other_dates:
-                    logging.info("OUT: %r", out_date)
+                    logging.info("DROP: %r", out_date)
                 out_dates = out_dates + other_dates
+            logging.info("END DAY %s", day.date())
 
         # next keep one date per week for self.weeks
         for w in range(0, self.weeks):
             week_end = fix - timedelta(days=self.days, weeks=w)
             week_start = week_end - timedelta(weeks=1)
-            logging.info("WEEK %s - %s", week_start.date(), week_end.date())
-
+            logging.info("BEGIN WEEK %s - %s", week_start.date(), week_end.date())
             in_dates, out_dates = map(
                 add, [in_dates, out_dates], split_dates_in_span(week_start, week_end)
             )
+            logging.info("END WEEK %s - %s", week_start.date(), week_end.date())
 
         # this is tricky: adjust to months (keep all dates inbetween)
         weeks_end = fix - timedelta(days=self.days, weeks=self.weeks)
         fix_month = weeks_end.replace(day=1)
-        logging.info("ADJUSTMENT %s - %s", fix_month, weeks_end)
+        logging.info("BEGIN ADJUSTMENT %s - %s", fix_month, weeks_end)
         adjustment_dates = [
             d for d in dates if date_is_in_span(d, fix_month, weeks_end)
         ]
         if len(adjustment_dates):
             for in_date in adjustment_dates:
-                logging.info("IN:  %r", in_date)
+                logging.info("KEEP: %r", in_date)
             in_dates = in_dates + adjustment_dates
+        logging.info("END ADJUSTMENT %s - %s", fix_month, weeks_end)
 
         # next keep one date per month for self.months
         for m in range(0, self.months):
             month_end = fix_month - relativedelta(months=m)
             month_start = month_end - relativedelta(months=1)
-            logging.info("MONTH %s - %s", month_start.date(), month_end.date())
-
+            logging.info("BEGIN MONTH %s - %s", month_start.date(), month_end.date())
             in_dates, out_dates = map(
                 add, [in_dates, out_dates], split_dates_in_span(month_start, month_end)
             )
+            logging.info("END MONTH %s - %s", month_start.date(), month_end.date())
 
         # finally keep one date per year forever
         year_end = fix_month - relativedelta(months=self.months)
         year_start = year_end - relativedelta(years=1)
         last_date = tail(dates)
         while last_date and last_date < year_end:
-            logging.info("YEAR %s - %s", year_start.date(), year_end.date())
-
+            logging.info("BEGIN YEAR %s - %s", year_start.date(), year_end.date())
             in_dates, out_dates = map(
                 add, [in_dates, out_dates], split_dates_in_span(year_start, year_end)
             )
-
+            logging.info("END YEAR %s - %s", year_start.date(), year_end.date())
             year_end = year_end - relativedelta(years=1)
             year_start = year_end - relativedelta(years=1)
 
