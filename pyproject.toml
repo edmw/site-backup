@@ -12,7 +12,7 @@ description = "A tool to create backups of WordPress and HumHub instances"
 name = "site-backup"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "1.0.0"
+version = "2.0.0b1"
 
 [project.scripts]
 sitebackup = "sitebackup:main"
@@ -23,6 +23,9 @@ requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["backup"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"sitebackup.py" = "sitebackup.py"
 
 [tool.uv]
 dev-dependencies = [

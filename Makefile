@@ -1,11 +1,12 @@
 # Makefile for site-backup project
 # Run with: make <target>
 
-.PHONY: help install test test-no-cov test-unit test-integration test-cov-html cov-report cov-html cov-xml clean-cov lint format check clean
+.PHONY: help install test test-no-cov test-unit test-integration test-cov-html cov-report cov-html cov-xml clean-cov lint format check clean build release
 
 # Default target
 help:
-	@echo "Available targets:"
+	@echo
+	@echo "💡💡💡 Targets:"
 	@echo "  install        - Install dependencies"
 	@echo "  test           - Run tests with coverage"
 	@echo "  test-no-cov    - Run tests without coverage"
@@ -19,7 +20,9 @@ help:
 	@echo "  lint           - Run ruff linting"
 	@echo "  format         - Format code with black"
 	@echo "  check          - Run all quality checks (lint + test)"
-	@echo "  clean          - Clean all generated files"
+	@echo "  clean          - 🧹 Clean all generated files"
+	@echo "  build          - 🚧 Build distribution package"
+	@echo "  release        - 🚀 Prepare for release"
 
 # Install dependencies
 install:
@@ -59,9 +62,9 @@ cov-xml:
 
 # Clean coverage files
 clean-cov:
-	rm -rf htmlcov/
-	rm -f coverage.xml
-	rm -f .coverage
+	@rm -rf htmlcov/
+	@rm -f coverage.xml
+	@rm -f .coverage
 
 # Run linting
 lint:
@@ -76,6 +79,20 @@ check: lint test
 
 # Clean all generated files
 clean: clean-cov
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
+	@echo "🧹🧹🧹 Clean project ..."
+	@find . -type d -name "__pycache__" -exec rm -rf {} +
+	@find . -type f -name "*.pyc" -delete
+	@find . -type f -name "*.pyo" -delete
+
+# Build distribution package
+build:
+	@echo "🚧🚧🚧 Build project ..."
+	@uv build
+	@WHEEL_FILE=$$(ls dist/*-$(shell grep '^version = ' pyproject.toml | cut -d'"' -f2)-py3-none-any.whl); \
+		unzip -t "$$WHEEL_FILE"
+
+# Prepare for release
+release: clean build
+	@echo "🚀🚀🚀 Release project ..."
+	@ls -l dist/
+	@echo "💡💡💡 Ready for GitHub release upload"
