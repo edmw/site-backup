@@ -104,10 +104,10 @@ class Backup(Reporter):
         reports = []
         for reporter in reporters:
             out = [str(reporter)]
-            parameters = reporter.reportParameters()
+            parameters = reporter.report_parameters()
             if parameters:
                 out.append(parameters)
-            results = reporter.reportResults()
+            results = reporter.report_results()
             if results:
                 out.append(results)
             reports.append(LF.join(out))
@@ -160,7 +160,7 @@ class Backup(Reporter):
 
         def perform_thinning(strategy, archives):
             """Execute the given thinning strategy on the given archives."""
-            inarchives, outarchives = strategy.executeOn(archives, attr="ctime")
+            inarchives, outarchives = strategy.execute_on(archives, attr="ctime")
 
             return (inarchives, outarchives)
 
@@ -194,7 +194,7 @@ class Backup(Reporter):
 
                 for target in targets:
                     self.message(f"Transfering archive to {target.description}")
-                    target.transferArchive(archive, dry=dry)
+                    target.transfer_archive(archive, dry=dry)
 
             else:
                 archive = None
@@ -206,7 +206,7 @@ class Backup(Reporter):
                     self.message(
                         f"Thinning archives on {target.description} using strategy '{thinning}'"
                     )
-                    target.performThinning(
+                    target.perform_thinning(
                         self.source.slug,
                         functools.partial(perform_thinning, thinning),
                         dry=dry,
@@ -237,7 +237,7 @@ class Backup(Reporter):
 
                 # create celendar attachments
                 for target in targets:
-                    calendar = Calendar(target.listArchives())
+                    calendar = Calendar(target.list_archives())
                     doc = calendar.format()
                     if doc:
                         attachments.append(

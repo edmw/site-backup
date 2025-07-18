@@ -125,8 +125,8 @@ class DB(Reporter):
                 message = str(stderrdata).strip()
             raise DBError(self, message)
 
-        f = archive.createArchiveFile(f"{archive.name}-db.sql", binmode=True)
+        f = archive.create_archive_file(f"{archive.name}-db.sql", binmode=True)
         f.write(stdoutdata)
-        archive.addArchiveFile(f)
+        archive.add_archive_file(f)
 
         return DBResult(len(stdoutdata), len(tables))

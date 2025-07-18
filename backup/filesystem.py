@@ -48,4 +48,4 @@ class FS(Reporter):
     @reporter_check
     def add_to_archive(self, archive):
         logging.debug("add path '%s' to archive '%s'", self.path, archive.name)
-        archive.addPath(self.path, name=archive.name)
+        archive.add_path(self.path, name=archive.name)
