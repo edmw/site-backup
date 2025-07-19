@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import mock
 from unittest.mock import patch
 
@@ -39,14 +40,16 @@ def test_with_no_arguments(
 
     main(["path_for_test_with_no_arguments"])
 
-    mock_source_factory.assert_called_once_with("path_for_test_with_no_arguments")
+    mock_source_factory.assert_called_once_with(Path("path_for_test_with_no_arguments"))
     source_factory.create.assert_called_once_with(
-        dbhost=None,
-        dbname=None,
-        dbpass=None,
-        dbport=None,
-        dbprefix=None,
-        dbuser=None,
+        {
+            "dbhost": None,
+            "dbname": None,
+            "dbpass": None,
+            "dbport": None,
+            "dbprefix": None,
+            "dbuser": None,
+        }
     )
     # calls to backup (mailer is None because no --mail-from argument)
     mock_backup.assert_called_with(source, mailer=None, quiet=False)
@@ -88,14 +91,16 @@ def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_os_
         ]
     )
     # configuration should be taken from arguments
-    mock_source_factory.assert_called_once_with("path_for_test_with_db_arguments")
+    mock_source_factory.assert_called_once_with(Path("path_for_test_with_db_arguments"))
     source_factory.create.assert_called_once_with(
-        dbhost="localhost",
-        dbname="wpdb",
-        dbpass="123456",
-        dbport=None,
-        dbprefix="wp",
-        dbuser="michael",
+        {
+            "dbhost": "localhost",
+            "dbname": "wpdb",
+            "dbpass": "123456",
+            "dbport": None,
+            "dbprefix": "wp",
+            "dbuser": "michael",
+        }
     )
     # calls to backup (mailer is None because no --mail-from argument)
     mock_backup.assert_called_with(source, mailer=None, quiet=False)

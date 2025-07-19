@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from backup import Backup
@@ -224,13 +225,15 @@ def main(args: list[str] | None = None) -> None:
     # initialize source
 
     try:
-        source = SourceFactory(arguments.path).create(
-            dbname=arguments.db,
-            dbhost=arguments.dbhost,
-            dbport=arguments.dbport,
-            dbuser=arguments.dbuser,
-            dbpass=arguments.dbpass,
-            dbprefix=arguments.dbprefix,
+        source = SourceFactory(Path(arguments.path)).create(
+            {
+                "dbname": arguments.db,
+                "dbhost": arguments.dbhost,
+                "dbport": arguments.dbport,
+                "dbuser": arguments.dbuser,
+                "dbpass": arguments.dbpass,
+                "dbprefix": arguments.dbprefix,
+            }
         )
     except SourceMultipleError as exception:
         logging.error(f"Site-Backup: {exception}")

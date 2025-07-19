@@ -1,41 +1,29 @@
-from typing import TypedDict
+from pathlib import Path
 
 from backup.source.humhub import HH, HHError
 from backup.source.wordpress import WP, WPError
 
-from .error import SourceMultipleError
-
-
-class SourceConfig(TypedDict, total=False):
-    """Configuration parameters for source instances."""
-
-    dbname: str
-    dbhost: str
-    dbport: int
-    dbuser: str
-    dbpass: str
-    dbprefix: str
+from ._base import SourceConfig, SourceProtocol
+from .errors import SourceMultipleError
 
 
 class SourceFactory:
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: Path) -> None:
         super().__init__()
         self.path = path
 
-    def create(
-        self, **kwargs: SourceConfig
-    ) -> WP | HH:  # TODO: Consider creating a common base interface for WP and HH
+    def create(self, config: SourceConfig) -> SourceProtocol:
         errors: list[Exception] = []
 
         try:
-            source = WP(self.path, **kwargs)
+            source = WP(self.path, config)
         except WPError as exception:
             errors.append(exception)
         else:
             return source
 
         try:
-            source = HH(self.path, **kwargs)
+            source = HH(self.path, config)
         except HHError as exception:
             errors.append(exception)
         else:

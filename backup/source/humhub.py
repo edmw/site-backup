@@ -11,16 +11,18 @@
 import logging
 import os
 import re
+from pathlib import Path
 
 import pymysql as mysql
 from phply import phplex
 from phply.phpast import Array, Return
 from phply.phpparse import make_parser
 
-from backup.reporter import Reporter, reporter_check
-from backup.utils import formatkv, slugify
+from backup.reporter import reporter_check
+from backup.source._base import BaseSource, SourceConfig
+from backup.utils import slugify
 
-from .error import SourceError
+from .errors import SourceError
 
 
 class HHError(SourceError):
@@ -45,67 +47,28 @@ class HHDatabaseError(HHError):
     pass
 
 
-class HH(Reporter):
-    def __init__(self, path, **kwargs):
-        super().__init__()
+class HH(BaseSource):
+    def __init__(self, path: Path, config: SourceConfig | None = None):
+        super().__init__(path, path / "protected/config/dynamic.php")
 
-        self.fspath = path
-        self.fsconfig = os.path.join(path, "protected/config/dynamic.php")
-
-        self.dbname = None
-        self.dbhost = None
-        self.dbport = 3306
-        self.dbprefix = None
-        self.dbuser = None
-        self.dbpass = None
-        self.dbcharset = "utf8mb4"
-
-        self.title = None
-
-        self.slug = None
-
-        # check preconditions
         if not self.check_configuration():
             raise HHNotFoundError(self, f"no humhub instance found at '{self.fspath}'")
 
         self.parse_configuration()
 
-        if kwargs:
-            if kwargs["dbname"]:
-                self.dbname = kwargs["dbname"]
-            if kwargs["dbhost"]:
-                self.dbhost = kwargs["dbhost"]
-            if kwargs["dbport"]:
-                self.dbport = kwargs["dbport"]
-            if kwargs["dbuser"]:
-                self.dbuser = kwargs["dbuser"]
-            if kwargs["dbpass"]:
-                self.dbpass = kwargs["dbpass"]
-            if kwargs["dbprefix"]:
-                self.dbprefix = kwargs["dbprefix"]
+        if config:
+            self.dbname = config.get("dbname", self.dbname)
+            self.dbhost = config.get("dbhost", self.dbhost)
+            self.dbport = config.get("dbport", self.dbport)
+            self.dbuser = config.get("dbuser", self.dbuser)
+            self.dbpass = config.get("dbpass", self.dbpass)
+            self.dbprefix = config.get("dbprefix", self.dbprefix)
 
-        self.query_database()
-
-        self.description = f"Humhub '{self.title}'"
+        self.title, self.description, self.email = self.query_database()
         self.slug = slugify(self.title)
 
     def check_configuration(self):
         return os.path.exists(self.fspath) and os.path.isfile(self.fsconfig)
-
-    def __str__(self):
-        return formatkv(
-            [
-                ("Slug", self.slug),
-                ("WP(Title)", self.title),
-                ("DB(Name)", self.dbname),
-                ("DB(Host)", self.dbhost),
-                ("DB(Port)", self.dbport),
-                ("DB(Prefix)", self.dbprefix),
-                ("DB(User)", self.dbuser),
-                ("DB(Pass)", "*******" if self.dbpass else "-"),
-            ],
-            title="HUMHUB",
-        )
 
     @reporter_check
     def parse_configuration(self):
@@ -144,7 +107,7 @@ class HH(Reporter):
                     raise HHConfigError(self, "no database given")
 
     @reporter_check
-    def query_database(self):
+    def query_database(self) -> tuple[str, str, str]:
         assert self.dbname, "database name not set"
         assert self.dbhost, "database host not set"
         assert self.dbuser, "database user not set"
@@ -164,18 +127,20 @@ class HH(Reporter):
             cursor = connection.cursor()
             cursor.execute("SELECT value FROM setting" " WHERE name = 'name'")
             if row := cursor.fetchone():
-                self.title = row[0]
+                title = row[0]
             else:
                 raise HHNotFoundError(self, "title not found in setting table")
-            logging.debug("HH.queryDatabase: title=%s", self.title)
+            logging.debug("HH.queryDatabase: title=%s", title)
             cursor.execute(
                 "SELECT value FROM setting" " WHERE name = 'mailer.systemEmailAddress'"
             )
             if row := cursor.fetchone():
-                self.email = row[0]
+                email = row[0]
             else:
                 raise HHNotFoundError(self, "email not found in setting table")
-            logging.debug("HH.queryDatabase: email=%s", self.email)
+            logging.debug("HH.queryDatabase: email=%s", email)
+
+            return title, f"Humhub '{title}'", email
 
         except mysql.Error as e:
             raise HHDatabaseError(self, repr(e)) from e
