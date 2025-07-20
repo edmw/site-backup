@@ -2,6 +2,7 @@ __version__ = "1.0.0"
 
 import re
 from datetime import datetime
+from typing import Any, Iterable
 
 LF = "\n"
 LFLF = "\n\n"
@@ -27,39 +28,38 @@ FULLWIDTH = dict(
 TIMESTAMP_FORMAT = "%Y%m%d%H%M%S"
 
 
-def timestamp4now(now=None):
+def timestamp4now(now: datetime | None = None) -> str:
     if now is None:
         now = datetime.now()
     return now.strftime(TIMESTAMP_FORMAT)
 
 
-def timestamp2date(timestamp):
+def timestamp2date(timestamp: str) -> datetime:
     return datetime.strptime(timestamp, TIMESTAMP_FORMAT)
 
 
-def slugify(value):
-    if value is not None:
-        import unicodedata
+def slugify(value: str) -> str:
+    assert value is not None, "value must not be None"
 
-        value = (
-            unicodedata.normalize("NFKD", value)
-            .encode("ascii", "ignore")
-            .decode("ascii")
-        )
-        value = re.sub(r"[^\w\s-]", "", value).strip().lower()
-        value = re.sub(r"[-\s]+", "-", value)
+    import unicodedata
+
+    value = (
+        unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    )
+    value = re.sub(r"[^\w\s-]", "", value).strip().lower()
+    value = re.sub(r"[-\s]+", "-", value)
     return value
 
 
-def superscript(string):
+def superscript(string: str) -> str:
     return string.translate(SUPERSCRIPT)
 
 
-def fullwidth(string):
+def fullwidth(string: str) -> str:
     return string.translate(FULLWIDTH)
 
 
-def formatkv(kv, title=None):
+def formatkv(kv: Iterable[tuple[str, Any]], title: str | None = None):
     o = list()
     a = o.append
 
@@ -87,7 +87,7 @@ def formatkv(kv, title=None):
     return "\n".join(o)
 
 
-def formatsize(size, binary=False, format="{:.1f}"):
+def formatsize(size: int | float, binary: bool = False, format: str = "{:.1f}") -> str:
     if binary:
         base = 1024
         suffixes = ("KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB")

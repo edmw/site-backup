@@ -15,6 +15,7 @@ from backup.calendar import Calendar
 from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
 from backup.reporter import Reporter, reporter_inspect
+from backup.source import Source
 from backup.target.s3 import S3Error
 from backup.utils import LF, LFLF, formatkv
 from backup.utils.mail import Attachment, Mailer, Priority
@@ -41,7 +42,7 @@ class Backup(Reporter):
 
     def __init__(
         self,
-        source: Any,
+        source: Source,
         mailer: Mailer | None = None,
         quiet: bool = False,
     ) -> None:  # TODO: Type source when base interface exists

@@ -10,7 +10,9 @@
 
 import logging
 import os
+from pathlib import Path
 
+from backup.archive import Archive
 from backup.reporter import Reporter, reporter_check
 from backup.utils import formatkv
 
@@ -29,12 +31,12 @@ class FSNotFoundError(FSError):
 
 
 class FS(Reporter):
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: Path) -> None:
         super().__init__()
 
         self.path = path
 
-        if not os.path.exists(self.path):
+        if not path.exists():
             raise FSNotFoundError(self, f"path '{self.path}' not found")
 
     def __str__(self) -> str:
@@ -46,6 +48,6 @@ class FS(Reporter):
         )
 
     @reporter_check
-    def add_to_archive(self, archive):
+    def add_to_archive(self, archive: Archive) -> None:
         logging.debug("add path '%s' to archive '%s'", self.path, archive.name)
         archive.add_path(self.path, name=archive.name)

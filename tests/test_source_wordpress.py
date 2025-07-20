@@ -13,8 +13,8 @@ $table_prefix  = 'wp_';
 """
 
 
-@patch.object(WP, "check_configuration", return_value=True)
-@patch.object(WP, "query_database", return_value=("title", "description", "email"))
+@patch.object(WP, "_check_configuration", return_value=True)
+@patch.object(WP, "_query_database", return_value=("title", "email"))
 def test_construction(_mock_query, _mock_check):
     with patch(
         "backup.source.wordpress.open", mock_open(read_data=TEST_CONFIG), create=True
@@ -28,8 +28,8 @@ def test_construction(_mock_query, _mock_check):
     m.assert_called_once_with(Path("path_to_instance/wp-config.php"))
 
 
-@patch.object(WP, "check_configuration", return_value=True)
-@patch.object(WP, "query_database", return_value=("title", "description", "email"))
+@patch.object(WP, "_check_configuration", return_value=True)
+@patch.object(WP, "_query_database", return_value=("title", "email"))
 def test_construction_with_given_arguments(_mock_query, _mock_check):
     with patch(
         "backup.source.wordpress.open", mock_open(read_data=TEST_CONFIG), create=True

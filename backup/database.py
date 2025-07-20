@@ -45,9 +45,25 @@ class DBResult(collections.namedtuple("Result", ["size", "numberOfTables"])):
 
 class DB(Reporter):
     def __init__(
-        self, db: str, host: str, user: str, password: str, prefix: str
+        self,
+        db: str | None,
+        host: str | None,
+        user: str | None,
+        password: str | None,
+        prefix: str | None,
     ) -> None:
         super().__init__()
+
+        if not db:
+            raise DBError(self, "no database name given")
+        if not host:
+            raise DBError(self, "no database host given")
+        if not user:
+            raise DBError(self, "no database user given")
+        if not password:
+            raise DBError(self, "no database password given")
+        if prefix is None:
+            raise DBError(self, "no database prefix given")
 
         self.db = db
         self.host = host

@@ -29,10 +29,10 @@ class SourceProtocol(Protocol):
     fspath: Path
     fsconfig: Path
 
-    title: str | None
-    slug: str | None
+    title: str
+    slug: str
     description: str
-    email: str | None
+    email: str
 
     dbname: str | None
     dbhost: str | None
@@ -45,7 +45,7 @@ class SourceProtocol(Protocol):
     def __str__(self) -> str: ...
 
 
-class BaseSource(Reporter, SourceProtocol):
+class Source(Reporter, SourceProtocol):
     """Base class for all backup sources implementing the SourceProtocol."""
 
     def __init__(self, fspath: Path, fsconfig: Path) -> None:
@@ -54,10 +54,10 @@ class BaseSource(Reporter, SourceProtocol):
         self.fspath = fspath
         self.fsconfig = fsconfig
 
-        self.title = None
-        self.slug = None
+        self.title = ""
+        self.slug = ""
         self.description = ""
-        self.email = None
+        self.email = ""
 
         self.dbname = None
         self.dbhost = None

@@ -19,7 +19,7 @@ from phply.phpast import Array, Return
 from phply.phpparse import make_parser
 
 from backup.reporter import reporter_check
-from backup.source._base import BaseSource, SourceConfig
+from backup.source._base import Source, SourceConfig
 from backup.utils import slugify
 
 from .errors import SourceError
@@ -47,14 +47,14 @@ class HHDatabaseError(HHError):
     pass
 
 
-class HH(BaseSource):
+class HH(Source):
     def __init__(self, path: Path, config: SourceConfig | None = None):
         super().__init__(path, path / "protected/config/dynamic.php")
 
-        if not self.check_configuration():
+        if not self._check_configuration():
             raise HHNotFoundError(self, f"no humhub instance found at '{self.fspath}'")
 
-        self.parse_configuration()
+        self._parse_configuration()
 
         if config:
             self.dbname = config.get("dbname", self.dbname)
@@ -64,14 +64,18 @@ class HH(BaseSource):
             self.dbpass = config.get("dbpass", self.dbpass)
             self.dbprefix = config.get("dbprefix", self.dbprefix)
 
-        self.title, self.description, self.email = self.query_database()
+        title, email = self._query_database()
+        self.title = title
+        self.description = f"Humhub '{title}'"
+        self.email = email
+
         self.slug = slugify(self.title)
 
-    def check_configuration(self):
+    def _check_configuration(self) -> bool:
         return os.path.exists(self.fspath) and os.path.isfile(self.fsconfig)
 
     @reporter_check
-    def parse_configuration(self):
+    def _parse_configuration(self) -> None:
         dns_re = re.compile(r"^mysql:host=([^;]+);dbname=(.+)$")
 
         def array_get(array, key):
@@ -86,10 +90,10 @@ class HH(BaseSource):
             ast = parser.parse(f.read(), lexer=phplex.lexer.clone())
             if ast and isinstance(ast[0], Return):
                 r = ast[0].node
-                self.title = array_get(r, "name")
-                if not self.title:
+                title = array_get(r, "name")
+                if not title:
                     raise HHConfigError(self, "no title given")
-                logging.debug("HH.parseConfiguration: title=%s", self.title)
+                logging.debug("HH.parseConfiguration: title=%s", title)
                 components = array_get(r, "components")
                 if components:
                     db = array_get(components, "db")
@@ -107,7 +111,7 @@ class HH(BaseSource):
                     raise HHConfigError(self, "no database given")
 
     @reporter_check
-    def query_database(self) -> tuple[str, str, str]:
+    def _query_database(self) -> tuple[str, str]:
         assert self.dbname, "database name not set"
         assert self.dbhost, "database host not set"
         assert self.dbuser, "database user not set"
@@ -140,7 +144,7 @@ class HH(BaseSource):
                 raise HHNotFoundError(self, "email not found in setting table")
             logging.debug("HH.queryDatabase: email=%s", email)
 
-            return title, f"Humhub '{title}'", email
+            return title, email
 
         except mysql.Error as e:
             raise HHDatabaseError(self, repr(e)) from e

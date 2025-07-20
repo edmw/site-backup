@@ -1,3 +1,5 @@
+import pytest
+
 from backup.utils import formatsize, slugify, timestamp2date, timestamp4now
 
 
@@ -10,7 +12,6 @@ def test_timestamp():
 
 
 def test_slugify():
-    assert slugify(None) is None
     assert slugify("") == ""
     assert slugify("This") == "this"
     assert slugify("is") == "is"
@@ -19,6 +20,8 @@ def test_slugify():
     assert slugify(" and count to ten") == "and-count-to-ten"
     assert slugify("Feel the 34r7|-| move and then") == "feel-the-34r7-move-and-then"
     assert slugify("-- Hear my heart burst again") == "-hear-my-heart-burst-again"
+    with pytest.raises(AssertionError):
+        slugify(None)  # type: ignore
 
 
 def test_format_size():
@@ -44,4 +47,5 @@ def test_format_size_binary():
     assert formatsize(123123123123123123123, binary=True) == "106.8 EiB"
     assert formatsize(123123123123123123123123, binary=True) == "104.3 ZiB"
     assert formatsize(123123123123123123123123123, binary=True) == "101.8 YiB"
+    assert formatsize(123123123123123123123123123123, binary=True) == "101845.1 YiB"
     assert formatsize(123123123123123123123123123123, binary=True) == "101845.1 YiB"

@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from backup.source._base import BaseSource
+from backup.source._base import Source
 
 
 @pytest.fixture
@@ -13,17 +13,17 @@ def paths():
 
 @patch("backup.source._base.Reporter.__init__", return_value=None)
 def test_initialization(mock_reporter_init, paths):
-    source = BaseSource(*paths)
+    source = Source(*paths)
 
     mock_reporter_init.assert_called_once()
 
     assert source.fspath == paths[0]
     assert source.fsconfig == paths[1]
 
-    assert source.title is None
-    assert source.slug is None
+    assert source.title == ""
+    assert source.slug == ""
     assert source.description == ""
-    assert source.email is None
+    assert source.email == ""
 
     assert source.dbname is None
     assert source.dbhost is None
@@ -36,7 +36,7 @@ def test_initialization(mock_reporter_init, paths):
 
 @patch("backup.source._base.Reporter.__init__", return_value=None)
 def test_str(mock_reporter_init, paths):
-    source = BaseSource(*paths)
+    source = Source(*paths)
 
     source.title = "Test Title"
     source.slug = "test-title"
@@ -49,7 +49,7 @@ def test_str(mock_reporter_init, paths):
     source.dbprefix = "test_"
 
     assert str(source) == (
-        "BASESOURCE\n"
+        "SOURCE\n"
         "    Slug: test-title\n"
         "    WP(Title): Test Title\n"
         "    WP(Email): test@test.invalid\n"

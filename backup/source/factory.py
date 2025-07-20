@@ -3,7 +3,7 @@ from pathlib import Path
 from backup.source.humhub import HH, HHError
 from backup.source.wordpress import WP, WPError
 
-from ._base import SourceConfig, SourceProtocol
+from ._base import Source, SourceConfig
 from .errors import SourceMultipleError
 
 
@@ -12,7 +12,7 @@ class SourceFactory:
         super().__init__()
         self.path = path
 
-    def create(self, config: SourceConfig) -> SourceProtocol:
+    def create(self, config: SourceConfig) -> Source:
         errors: list[Exception] = []
 
         try:

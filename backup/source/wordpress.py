@@ -17,7 +17,7 @@ import pymysql as mysql
 from backup.reporter import reporter_check
 from backup.utils import slugify
 
-from ._base import BaseSource, SourceConfig
+from ._base import Source, SourceConfig
 from .errors import SourceError
 
 
@@ -39,16 +39,16 @@ class WPDatabaseError(WPError):
     pass
 
 
-class WP(BaseSource):
+class WP(Source):
     def __init__(self, path: Path, config: SourceConfig | None = None):
         super().__init__(path, path / "wp-config.php")
 
-        if not self.check_configuration():
+        if not self._check_configuration():
             raise WPNotFoundError(
                 self, f"no wordpress instance found at '{self.fspath}'"
             )
 
-        self.parse_configuration()
+        self._parse_configuration()
 
         if config:
             self.dbname = config.get("dbname", self.dbname)
@@ -58,14 +58,18 @@ class WP(BaseSource):
             self.dbpass = config.get("dbpass", self.dbpass)
             self.dbprefix = config.get("dbprefix", self.dbprefix)
 
-        self.title, self.description, self.email = self.query_database()
+        title, email = self._query_database()
+        self.title = title
+        self.description = f"WordPress '{title}'"
+        self.email = email
+
         self.slug = slugify(self.title)
 
-    def check_configuration(self):
+    def _check_configuration(self) -> bool:
         return os.path.exists(self.fspath) and os.path.isfile(self.fsconfig)
 
     @reporter_check
-    def parse_configuration(self):
+    def _parse_configuration(self) -> None:
         # regular expression for php defines:
         #   define('KEY', 'VALUE');
         re_define = re.compile(
@@ -121,7 +125,7 @@ class WP(BaseSource):
                 self.dbport = int(port) if port else self.dbport
 
     @reporter_check
-    def query_database(self) -> tuple[str, str, str]:
+    def _query_database(self) -> tuple[str, str]:
         assert self.dbname, "database name not set"
         assert self.dbhost, "database host not set"
         assert self.dbuser, "database user not set"
@@ -156,7 +160,7 @@ class WP(BaseSource):
             else:
                 raise WPNotFoundError(self, "email not found in options table")
 
-            return title, f"Wordpress Blog '{title}'", email
+            return title, email
 
         except mysql.Error as e:
             raise WPDatabaseError(self, repr(e)) from e

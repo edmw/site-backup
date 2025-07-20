@@ -14,6 +14,7 @@ import logging
 import os
 import tarfile
 import time
+from pathlib import Path
 
 import humanfriendly
 
@@ -67,7 +68,7 @@ class ArchiveFile:
 
 
 class Archive(Reporter):
-    def __init__(self, label, timestamp=None):
+    def __init__(self, label: str, timestamp=None) -> None:
         super().__init__()
 
         self.timestamp = timestamp or timestamp4now()
@@ -142,9 +143,9 @@ class Archive(Reporter):
             raise RuntimeError("archive not opened")
 
     @reporter_check_result
-    def add_path(self, path, name=None):
+    def add_path(self, path: Path, name=None):
         if self.tar:
-            self.tar.add(path, arcname=name)
+            self.tar.add(str(path), arcname=name)
             return path
         else:
             raise RuntimeError("archive not opened")
