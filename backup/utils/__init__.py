@@ -1,8 +1,9 @@
 __version__ = "1.0.0"
 
 import re
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Any, Iterable
+from typing import Any
 
 LF = "\n"
 LFLF = "\n\n"

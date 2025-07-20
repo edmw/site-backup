@@ -16,7 +16,9 @@ from backup.database import DB, DBError
 from backup.filesystem import FS, FSError
 from backup.reporter import Reporter, reporter_inspect
 from backup.source import Source
+from backup.target import Target
 from backup.target.s3 import S3Error
+from backup.thinning import ThinningStrategy
 from backup.utils import LF, LFLF, formatkv
 from backup.utils.mail import Attachment, Mailer, Priority
 
@@ -135,12 +137,12 @@ class Backup(Reporter):
     @reporter_inspect("thinning")
     def execute(
         self,
-        targets,
-        database=False,
-        filesystem=False,
-        thinning=None,
-        attic=None,
-        dry=False,
+        targets: list[Target],
+        database: bool = False,
+        filesystem: bool = False,
+        thinning: ThinningStrategy | None = None,
+        attic: str | None = None,
+        dry: bool = False,
     ):
         """Perfoms the creation of a backup.
 

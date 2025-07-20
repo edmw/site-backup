@@ -9,7 +9,6 @@
 """
 
 import logging
-import os
 from pathlib import Path
 
 from backup.archive import Archive

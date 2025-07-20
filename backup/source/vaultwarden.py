@@ -57,6 +57,6 @@ class VW(Source):
             self.description = f"Vaultwarden '{self.title}'"
             self.email = config_data["smtp_from"]
         except json.JSONDecodeError as e:
-            raise VWError(self, f"Invalid JSON in config file: {e}")
+            raise VWError(self, f"Invalid JSON in config file: {e}") from e
         except KeyError as e:
-            raise VWError(self, f"Missing key in config file: {e}")
+            raise VWError(self, f"Missing key in config file: {e}") from e

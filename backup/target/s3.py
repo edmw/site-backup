@@ -15,6 +15,8 @@ import socket
 import sys
 import time
 from collections import namedtuple
+from collections.abc import Callable
+from typing import override
 
 import boto3
 import humanfriendly
@@ -26,7 +28,8 @@ from botocore.exceptions import (
 )
 
 from backup.archive import Archive
-from backup.reporter import Reporter, reporter_check_result
+from backup.reporter import reporter_check_result
+from backup.target._base import Target
 from backup.utils import formatkv
 
 
@@ -66,7 +69,7 @@ class S3ThinningResult(
         )
 
 
-class S3(Reporter):
+class S3(Target):
     """Class using a cloud service with the S3 API to transfer an archive.
 
     To use initialize with the configuration of a compatible cloud service
@@ -145,7 +148,8 @@ class S3(Reporter):
                 sys.stdout.write("\n")
             sys.stdout.flush()
 
-    def list_archives(self, label=None):
+    @override
+    def list_archives(self, label: str | None = None) -> list[Archive]:
         try:
             archives = []
 
@@ -175,8 +179,9 @@ class S3(Reporter):
         except socket.gaierror as e:
             raise S3Error(self, repr(e)) from e
 
+    @override
     @reporter_check_result
-    def transfer_archive(self, archive, dry=False):
+    def transfer_archive(self, archive: Archive, dry: bool = False):
         """Transfers the given archive to the configured cloud service.
 
         If the configured bucket does not exist it will be created.
@@ -227,8 +232,9 @@ class S3(Reporter):
         except socket.gaierror as e:
             raise S3Error(self, repr(e)) from e
 
+    @override
     @reporter_check_result
-    def perform_thinning(self, label, thin_archives, dry=False):
+    def perform_thinning(self, label: str, thin_archives: Callable, dry: bool = False):
         """Deletes obsolete archives from the configured cloud service.
 
         Collects all archives in the configured bucket and decides which

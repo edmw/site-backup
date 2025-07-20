@@ -8,6 +8,8 @@
 ##     ## ##     ##  ######  ##     ## ####    ###    ########
 """
 
+from __future__ import annotations
+
 import collections
 import io
 import logging
@@ -62,13 +64,13 @@ class ArchiveFile:
         self.handle.seek(0, os.SEEK_END)
         return self.handle.tell()
 
-    def fileobject(self):
+    def fileobject(self) -> io.BytesIO:
         self.handle.seek(0)
         return self.handle
 
 
 class Archive(Reporter):
-    def __init__(self, label: str, timestamp=None) -> None:
+    def __init__(self, label: str, timestamp: str | None = None) -> None:
         super().__init__()
 
         self.timestamp = timestamp or timestamp4now()
@@ -83,7 +85,7 @@ class Archive(Reporter):
         self.tar = None
 
     @classmethod
-    def fromfilename(cls, filename, check_label=None):
+    def fromfilename(cls, filename: str, check_label: str | None = None) -> Archive:
         import re
 
         m = re.match(r"^(.*)-([^-]+)\.tgz$", filename)
@@ -99,10 +101,10 @@ class Archive(Reporter):
 
         return cls(label, timestamp)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Archive[name={self.name}, timestamp={self.timestamp}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return formatkv([("Name", self.name)], title="ARCHIVE")
 
     def tarname(self, path=None):
@@ -128,11 +130,11 @@ class Archive(Reporter):
             "createArchive", ArchiveResult(os.path.getsize(self.tarname()))
         )
 
-    def create_archive_file(self, name, binmode=False):
+    def create_archive_file(self, name: str, binmode: bool = False) -> ArchiveFile:
         return ArchiveFile(name, binmode=binmode)
 
     @reporter_check_result
-    def add_archive_file(self, archivefile):
+    def add_archive_file(self, archivefile: ArchiveFile) -> str:
         if self.tar:
             tarinfo = tarfile.TarInfo(archivefile.name)
             tarinfo.mtime = archivefile.mtime
@@ -143,7 +145,7 @@ class Archive(Reporter):
             raise RuntimeError("archive not opened")
 
     @reporter_check_result
-    def add_path(self, path: Path, name=None):
+    def add_path(self, path: Path, name: str | None = None) -> Path:
         if self.tar:
             self.tar.add(str(path), arcname=name)
             return path
@@ -151,7 +153,7 @@ class Archive(Reporter):
             raise RuntimeError("archive not opened")
 
     @reporter_check
-    def add_manifest(self, timestamp):
+    def add_manifest(self, timestamp: str) -> None:
         f = self.create_archive_file("MANIFEST")
         f.writeline(f"Timestamp: {timestamp}")
         self.add_archive_file(f)
@@ -167,7 +169,7 @@ class Archive(Reporter):
         return tarname
 
     @reporter_check_result
-    def remove(self):
+    def remove(self) -> str:
         tarname = self.tarname()
         if os.path.isfile(tarname):
             os.remove(tarname)

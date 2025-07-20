@@ -17,6 +17,7 @@ from typing import Any
 
 from backup import Backup
 from backup.source import SourceFactory, SourceMultipleError
+from backup.target import Target
 from backup.target.s3 import S3
 from backup.thinning import ThinningStrategy
 from backup.utils.mail import Mailer, Recipient, Sender
@@ -243,7 +244,7 @@ def main(args: list[str] | None = None) -> None:
 
     # initialize targets
 
-    targets = []
+    targets: list[Target] = []
 
     if arguments.s3:
         # transfer backup to s3 service
