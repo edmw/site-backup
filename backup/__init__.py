@@ -45,7 +45,7 @@ class Backup(Reporter):
         source: Source,
         mailer: Mailer | None = None,
         quiet: bool = False,
-    ) -> None:  # TODO: Type source when base interface exists
+    ) -> None:
         super().__init__()
         self.source = source
         self.mailer = mailer
