@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from backup.source.humhub import HH, HHError
+from backup.source.vaultwarden import VW, VWError
 from backup.source.wordpress import WP, WPError
 
 from ._base import Source, SourceConfig
@@ -25,6 +26,13 @@ class SourceFactory:
         try:
             source = HH(self.path, config)
         except HHError as exception:
+            errors.append(exception)
+        else:
+            return source
+
+        try:
+            source = VW(self.path, config)
+        except VWError as exception:
             errors.append(exception)
         else:
             return source

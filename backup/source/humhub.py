@@ -9,7 +9,6 @@
 """
 
 import logging
-import os
 import re
 from pathlib import Path
 
@@ -72,7 +71,7 @@ class HH(Source):
         self.slug = slugify(self.title)
 
     def _check_configuration(self) -> bool:
-        return os.path.exists(self.fspath) and os.path.isfile(self.fsconfig)
+        return self.fspath.exists() and self.fsconfig.is_file()
 
     @reporter_check
     def _parse_configuration(self) -> None:
