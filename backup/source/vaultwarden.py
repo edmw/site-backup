@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from backup.reporter import reporter_check
+from backup.utils import slugify
 
 from ._base import Source, SourceConfig
 from .errors import SourceError
@@ -44,6 +45,8 @@ class VW(Source):
 
         self.dbname = None
         self.dbhost = None
+
+        self.slug = slugify(self.title)
 
     def _check_configuration(self) -> bool:
         return self.fspath.exists() and self.fsconfig.is_file()
