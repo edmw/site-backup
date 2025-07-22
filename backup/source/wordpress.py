@@ -160,4 +160,3 @@ class WP(Source):
         finally:
             if connection:
                 connection.close()
-                connection.close()
