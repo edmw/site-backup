@@ -39,17 +39,22 @@ def timestamp2date(timestamp: str) -> datetime:
     return datetime.strptime(timestamp, TIMESTAMP_FORMAT)
 
 
-def slugify(value: str) -> str:
+def slugify(value: str) -> str | None:
     assert value is not None, "value must not be None"
 
     import unicodedata
+
+    if value.startswith("https://"):
+        value = value[8:]
+    elif value.startswith("http://"):
+        value = value[7:]
 
     value = (
         unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
     )
     value = re.sub(r"[^\w\s-]", "", value).strip().lower()
     value = re.sub(r"[-\s]+", "-", value)
-    return value
+    return value if value else None
 
 
 def superscript(string: str) -> str:

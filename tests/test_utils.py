@@ -12,7 +12,7 @@ def test_timestamp():
 
 
 def test_slugify():
-    assert slugify("") == ""
+    assert slugify("") is None
     assert slugify("This") == "this"
     assert slugify("is") == "is"
     assert slugify("the end") == "the-end"
@@ -20,6 +20,7 @@ def test_slugify():
     assert slugify(" and count to ten") == "and-count-to-ten"
     assert slugify("Feel the 34r7|-| move and then") == "feel-the-34r7-move-and-then"
     assert slugify("-- Hear my heart burst again") == "-hear-my-heart-burst-again"
+    assert slugify("https://web.de") == "webde"
     with pytest.raises(AssertionError):
         slugify(None)  # type: ignore
 
