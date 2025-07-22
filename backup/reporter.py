@@ -112,8 +112,9 @@ def reporter_check(function: Callable) -> Callable:
     @wraps(function)
     def checked_function(self, *args, **kwargs):
         try:
-            function(self, *args, **kwargs)
+            result = function(self, *args, **kwargs)
             self.store_result(function.__name__, True)
+            return result
         except BaseException:
             self.store_result(function.__name__, False)
             raise
