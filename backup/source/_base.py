@@ -82,3 +82,18 @@ class Source(Reporter, SourceProtocol):
             ],
             title=self.__class__.__name__.upper(),
         )
+
+    def _build_configuration(self, config: SourceConfig | None):
+        if config:
+            if dbname := config.get("dbname"):
+                self.dbname = dbname
+            if dbhost := config.get("dbhost"):
+                self.dbhost = dbhost
+            if dbport := config.get("dbport"):
+                self.dbport = dbport
+            if dbuser := config.get("dbuser"):
+                self.dbuser = dbuser
+            if dbpass := config.get("dbpass"):
+                self.dbpass = dbpass
+            if dbprefix := config.get("dbprefix"):
+                self.dbprefix = dbprefix

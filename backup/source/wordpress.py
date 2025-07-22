@@ -48,14 +48,7 @@ class WP(Source):
             )
 
         self._parse_configuration()
-
-        if config:
-            self.dbname = config.get("dbname", self.dbname)
-            self.dbhost = config.get("dbhost", self.dbhost)
-            self.dbport = config.get("dbport", self.dbport)
-            self.dbuser = config.get("dbuser", self.dbuser)
-            self.dbpass = config.get("dbpass", self.dbpass)
-            self.dbprefix = config.get("dbprefix", self.dbprefix)
+        self._build_configuration(config)
 
         title, email = self._query_database()
         self.title = title
