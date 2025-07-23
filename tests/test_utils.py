@@ -12,7 +12,6 @@ def test_timestamp():
 
 
 def test_slugify():
-    assert slugify("") is None
     assert slugify("This") == "this"
     assert slugify("is") == "is"
     assert slugify("the end") == "the-end"
@@ -23,6 +22,8 @@ def test_slugify():
     assert slugify("https://web.de") == "webde"
     with pytest.raises(AssertionError):
         slugify(None)  # type: ignore
+    with pytest.raises(AssertionError):
+        slugify("")  # type: ignore
 
 
 def test_format_size():
