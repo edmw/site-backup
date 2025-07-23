@@ -3,6 +3,7 @@ __version__ = "1.0.0"
 import re
 from collections.abc import Iterable
 from datetime import datetime
+from hashlib import sha256
 from typing import Any
 
 LF = "\n"
@@ -39,8 +40,9 @@ def timestamp2date(timestamp: str) -> datetime:
     return datetime.strptime(timestamp, TIMESTAMP_FORMAT)
 
 
-def slugify(value: str) -> str | None:
+def slugify(value: str) -> str:
     assert value is not None, "value must not be None"
+    assert value != "", "value must not be empty"
 
     import unicodedata
 
@@ -54,7 +56,11 @@ def slugify(value: str) -> str | None:
     )
     value = re.sub(r"[^\w\s-]", "", value).strip().lower()
     value = re.sub(r"[-\s]+", "-", value)
-    return value if value else None
+
+    if value:
+        return value
+    else:
+        return sha256(value.encode("utf-8")).hexdigest()
 
 
 def superscript(string: str) -> str:
