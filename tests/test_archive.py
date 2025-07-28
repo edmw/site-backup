@@ -1,7 +1,9 @@
+from unittest.mock import patch
+
 import humanfriendly
 import pytest
 
-from backup.archive import ArchiveResult
+from backup.archive import ArchiveFile, ArchiveResult
 
 
 class TestArchiveResult:
@@ -106,3 +108,184 @@ class TestArchiveResult:
         new_result = result._replace(size=2048)
         assert result.size == 1024
         assert new_result.size == 2048
+
+
+class TestArchiveFile:
+    """Test cases for ArchiveFile class."""
+
+    def test_archivefile_creation(self):
+        """Test that ArchiveFile can be created with a name."""
+        archive_file = ArchiveFile("test.txt")
+        assert archive_file.name == "test.txt"
+        assert archive_file.binmode is False
+        assert archive_file.ctime == archive_file.mtime
+
+    def test_archivefile_creation_with_binmode(self):
+        """Test that ArchiveFile can be created with binary mode."""
+        archive_file = ArchiveFile("test.bin", binmode=True)
+        assert archive_file.name == "test.bin"
+        assert archive_file.binmode is True
+
+    @patch("backup.archive.time.time")
+    def test_archivefile_timestamps(self, mock_time):
+        """Test that timestamps are set correctly during creation."""
+        mock_time.return_value = 1234567890.0
+        archive_file = ArchiveFile("test.txt")
+        assert archive_file.ctime == 1234567890.0
+        assert archive_file.mtime == 1234567890.0
+
+    def test_archivefile_write_string(self):
+        """Test writing string data to ArchiveFile."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("Hello World")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World"
+
+    def test_archivefile_write_bytes(self):
+        """Test writing bytes data to ArchiveFile."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write(b"Hello World")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World"
+
+    def test_archivefile_write_string_binmode(self):
+        """Test writing string data in binary mode."""
+        archive_file = ArchiveFile("test.txt", binmode=True)
+        archive_file.write("Hello World")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World"
+
+    def test_archivefile_writeline_string(self):
+        """Test writing string with newline to ArchiveFile."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.writeline("Hello World")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World\n"
+
+    def test_archivefile_writeline_bytes(self):
+        """Test writing bytes with newline to ArchiveFile."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.writeline(b"Hello World")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World\n"
+
+    def test_archivefile_writeline_string_binmode(self):
+        """Test writing string with newline in binary mode."""
+        archive_file = ArchiveFile("test.txt", binmode=True)
+        archive_file.writeline("Hello World")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World\n"
+
+    def test_archivefile_multiple_writes(self):
+        """Test multiple writes to the same ArchiveFile."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("Hello ")
+        archive_file.write("World")
+        archive_file.writeline("!")
+        archive_file.write("More content")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World!\nMore content"
+
+    def test_archivefile_size_empty(self):
+        """Test size of empty ArchiveFile."""
+        archive_file = ArchiveFile("test.txt")
+        assert archive_file.size() == 0
+
+    def test_archivefile_size_with_content(self):
+        """Test size calculation with content."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("Hello World")
+        assert archive_file.size() == 11
+
+    def test_archivefile_size_with_writeline(self):
+        """Test size calculation with writeline content."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.writeline("Hello")
+        assert archive_file.size() == 6  # "Hello" + "\n"
+
+    def test_archivefile_size_after_multiple_operations(self):
+        """Test size after multiple write operations."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("Hello")
+        archive_file.writeline(" World")
+        archive_file.write("!")
+        assert archive_file.size() == 13
+
+    def test_archivefile_fileobject_returns_bytesio(self):
+        """Test that fileobject returns a BytesIO object."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("test content")
+        file_obj = archive_file.fileobject()
+        assert hasattr(file_obj, "read")
+        assert hasattr(file_obj, "seek")
+        assert hasattr(file_obj, "tell")
+
+    def test_archivefile_fileobject_positioned_at_start(self):
+        """Test that fileobject is positioned at start when returned."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("test content")
+        file_obj = archive_file.fileobject()
+        assert file_obj.tell() == 0
+        content = file_obj.read()
+        assert content == b"test content"
+
+    def test_archivefile_size_preserves_position(self):
+        """Test that size() method preserves the handle position after multiple calls."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("test content")
+        size1 = archive_file.size()
+        size2 = archive_file.size()
+        assert size1 == size2 == 12
+        archive_file.write(" more")
+        assert archive_file.size() == 17
+
+    def test_archivefile_mixed_string_bytes_operations(self):
+        """Test mixing string and bytes operations."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("Hello ")
+        archive_file.write(b"World ")
+        archive_file.writeline("from")
+        archive_file.writeline(b"Python")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"Hello World from\nPython\n"
+
+    def test_archivefile_unicode_content(self):
+        """Test handling unicode content."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("Hello 世界")
+        archive_file.writeline("🚀")
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        expected = "Hello 世界🚀\n".encode("utf-8")  # noqa: UP012
+        assert content == expected
+
+    def test_archivefile_large_content(self):
+        """Test handling larger content."""
+        archive_file = ArchiveFile("test.txt")
+        large_content = "A" * 1_000_000
+        archive_file.write(large_content)
+        assert archive_file.size() == 1_000_000
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert len(content) == 1_000_000
+        assert content == large_content.encode()
+
+    def test_archivefile_empty_writes(self):
+        """Test writing empty strings and bytes."""
+        archive_file = ArchiveFile("test.txt")
+        archive_file.write("")
+        archive_file.write(b"")
+        archive_file.writeline("")
+        archive_file.writeline(b"")
+        assert archive_file.size() == 2
+        file_obj = archive_file.fileobject()
+        content = file_obj.read()
+        assert content == b"\n\n"
