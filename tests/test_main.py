@@ -18,17 +18,28 @@ def test_help():
     assert exceptioninfo.value.code == 0
 
 
+def test_version():
+    with pytest.raises(SystemExit) as exceptioninfo:
+        main(
+            [
+                "--version",
+            ]
+        )
+    assert exceptioninfo.value.code == 0
+
+
 def setup_source(mock_class):
     m = mock_class()
     return m
 
 
 @patch("sitebackup.os.path.isdir", return_value=True)
+@patch("sitebackup.get_version", return_value="2.0.0rc1")
 @patch("sitebackup.Mailer")
 @patch("sitebackup.SourceFactory")
 @patch("sitebackup.Backup")
 def test_with_no_arguments(
-    mock_backup, mock_source_factory, _mock_mailer, _mock_os_isdir
+    mock_backup, mock_source_factory, _mock_mailer, _mock_get_version, _mock_os_isdir
 ):
     # Mock SourceFactory and its create method
     source_factory = mock_source_factory.return_value
@@ -52,7 +63,7 @@ def test_with_no_arguments(
         }
     )
     # calls to backup (mailer is None because no --mail-from argument)
-    mock_backup.assert_called_with(source, mailer=None, quiet=False)
+    mock_backup.assert_called_with(source, mailer=None, quiet=False, version="2.0.0rc1")
     bup.execute.assert_called_with(
         targets=[],
         database=False,
@@ -64,10 +75,11 @@ def test_with_no_arguments(
 
 
 @patch("sitebackup.os.path.isdir", return_value=True)
+@patch("sitebackup.get_version", return_value="2.0.0rc1")
 @patch("sitebackup.Mailer")
 @patch("sitebackup.SourceFactory")
 @patch("sitebackup.Backup")
-def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_os_isdir):
+def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_get_version, _mock_os_isdir):
     mailer = mock_mailer()
 
     # Mock SourceFactory and its create method
@@ -103,7 +115,7 @@ def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_os_
         }
     )
     # calls to backup (mailer is None because no --mail-from argument)
-    mock_backup.assert_called_with(source, mailer=None, quiet=False)
+    mock_backup.assert_called_with(source, mailer=None, quiet=False, version="2.0.0rc1")
     bup.execute.assert_called_with(
         targets=[],
         database=False,
@@ -130,7 +142,7 @@ def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_os_
         mock.call(Recipient("example@localhost")),
     ] == mailer.add_recipient.mock_calls
     # calls to backup (now mailer should be provided)
-    mock_backup.assert_called_with(source, mailer=mailer, quiet=True)
+    mock_backup.assert_called_with(source, mailer=mailer, quiet=True, version="2.0.0rc1")
     bup.execute.assert_called_with(
         targets=[],
         database=False,
@@ -143,7 +155,7 @@ def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_os_
     # test 3: switch on database processing and configure attic with no parameter
     main(["--database", "--attic", "--", "."])
     # calls to backup
-    mock_backup.assert_called_with(source, mailer=None, quiet=False)
+    mock_backup.assert_called_with(source, mailer=None, quiet=False, version="2.0.0rc1")
     bup.execute.assert_called_with(
         targets=[], database=True, filesystem=False, thinning=None, attic=".", dry=False
     )
@@ -151,7 +163,7 @@ def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_os_
     # test 4: switch on filesystem processing and configure attic with parameter
     main(["--filesystem", "--attic=path_to_attic", "."])
     # calls to backup
-    mock_backup.assert_called_with(source, mailer=None, quiet=False)
+    mock_backup.assert_called_with(source, mailer=None, quiet=False, version="2.0.0rc1")
     bup.execute.assert_called_with(
         targets=[],
         database=False,
@@ -163,10 +175,11 @@ def test_with_arguments(mock_backup, mock_source_factory, mock_mailer, _mock_os_
 
 
 @patch("sitebackup.os.path.isdir", return_value=True)
+@patch("sitebackup.get_version", return_value="2.0.0rc1")
 @patch("sitebackup.SourceFactory")
 @patch("sitebackup.S3")
 @patch("sitebackup.Backup")
-def test_with_s3_arguments(mock_backup, mock_s3, mock_source_factory, _mock_os_isdir):
+def test_with_s3_arguments(mock_backup, mock_s3, mock_source_factory, _mock_get_version, _mock_os_isdir):
     # Mock SourceFactory and its create method
     source_factory = mock_source_factory.return_value
     source = setup_source(mock.Mock)
