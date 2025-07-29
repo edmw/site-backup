@@ -47,11 +47,13 @@ class Backup(Reporter):
         source: Source,
         mailer: Mailer | None = None,
         quiet: bool = False,
+        version: str | None = None,
     ) -> None:
         super().__init__()
         self.source = source
         self.mailer = mailer
         self.quiet = quiet
+        self.version = version if version else "unknown"
         self.stime = 0
         self.etime = 0
         self.error = None
@@ -59,6 +61,7 @@ class Backup(Reporter):
     def __str__(self) -> str:
         return formatkv(
             [
+                ("Version", self.version),
                 (
                     "Execution Time",
                     humanfriendly.format_timespan(self.etime - self.stime),

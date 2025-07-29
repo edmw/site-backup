@@ -33,6 +33,37 @@ from backup.utils.mail import Mailer, Recipient, Sender
 """
 
 
+def get_version() -> str:
+    """Get version from package metadata or pyproject.toml."""
+    try:
+        from importlib.metadata import version
+
+        return version("site-backup")
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    try:
+        import tomllib
+
+        pyproject_path = Path(__file__).parent / "pyproject.toml"
+        if pyproject_path.exists():
+            with open(pyproject_path, "rb") as f:
+                data = tomllib.load(f)
+                return data.get("project", {}).get("version", "unknown")
+    except ImportError:
+        pass
+    except FileNotFoundError:
+        pass
+    except PermissionError:
+        pass
+    except Exception:
+        pass
+
+    return "unknown"
+
+
 DESCRIPTION = """
 This script creates a backup of a Wordpress Blog instance.
 
@@ -93,6 +124,14 @@ def main(args: list[str] | None = None) -> None:
         epilog=EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+
+    # Add version argument
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {get_version()}",
+    )
+
     parser.add_argument(
         "path", action="store", type=dir_argument, help="path to wordpress instance"
     )
@@ -271,7 +310,7 @@ def main(args: list[str] | None = None) -> None:
 
     # initialize and execute backup
 
-    backup = Backup(source, mailer=mailer, quiet=arguments.quiet)
+    backup = Backup(source, mailer=mailer, quiet=arguments.quiet, version=get_version())
     backup.execute(
         targets=targets,
         database=arguments.database,
