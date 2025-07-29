@@ -108,7 +108,6 @@ class HH(Source):
         assert self.dbhost, "database host not set"
         assert self.dbuser, "database user not set"
         assert self.dbpass, "database password not set"
-        assert self.dbprefix, "database prefix not set"
 
         connection = None
         try:
