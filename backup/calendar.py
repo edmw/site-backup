@@ -13,10 +13,12 @@ from collections import Counter
 from datetime import date
 from operator import attrgetter
 
+from backup.archive import Archive
+
 
 class Calendar(calendar.HTMLCalendar):
 
-    def __init__(self, archives, today=None):
+    def __init__(self, archives: list[Archive], today: date | None = None) -> None:
         if today is None:
             today = date.today()
         super().__init__()
@@ -28,7 +30,7 @@ class Calendar(calendar.HTMLCalendar):
 
         self.dates = Counter([archive.ctime.date() for archive in archives])
 
-    def formatday(self, day, weekday):
+    def formatday(self, day: int, weekday: int) -> str:
         h = super().formatday(day, weekday)
         if day:
             d = date(self.year, self.month, day)
@@ -43,7 +45,7 @@ class Calendar(calendar.HTMLCalendar):
                 h = h.replace(c, c + " future")
         return h
 
-    def formatmonth(self, theyear, themonth, withyear=True):
+    def formatmonth(self, theyear: int, themonth: int, withyear: bool = True) -> str:
         self.year = theyear
         self.month = themonth
         return super().formatmonth(theyear, themonth, withyear=withyear)
@@ -119,8 +121,8 @@ class Calendar(calendar.HTMLCalendar):
     }
     """
 
-    def formatpage(self, content):
-        h = []
+    def formatpage(self, content: str) -> str:
+        h: list[str] = []
         a = h.append
         a("<!DOCTYPE HTML>")
         a("<html>")
@@ -135,14 +137,14 @@ class Calendar(calendar.HTMLCalendar):
         a("</html>")
         return "".join(h)
 
-    def format(self):
+    def format(self) -> str:
         first_year = (
             self.first_archive.ctime.year if self.first_archive else self.today.year
         )
         last_year = (
             self.last_archive.ctime.year if self.last_archive else self.today.year
         )
-        h = []
+        h: list[str] = []
         a = h.append
         year = first_year
         while year <= last_year:
