@@ -62,8 +62,6 @@ class DB(Reporter):
             raise DBError(self, "no database user given")
         if not password:
             raise DBError(self, "no database password given")
-        if prefix is None:
-            raise DBError(self, "no database prefix given")
 
         self.db = db
         self.host = host
